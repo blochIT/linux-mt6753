@@ -56,5 +56,9 @@ would be unsafe.
 6. Port display, touch and capacitive keys after the headless server path is
    stable.
 
-No upstream kernel image has been compiled, packaged, booted or flashed from
-this checkout yet.
+An ARM64 `tinyconfig`-based generic image was compiled successfully with the
+minimal fragment at `configs/vivo5r-mainline-minimal.fragment`. Its output is
+kept outside the source tree at
+`/home/admin/linux-mainline-build-tiny/arch/arm64/boot/Image.gz`.
+It has no MT6753 board DTB, has not been packaged, booted or flashed, and is
+not yet a phone image.

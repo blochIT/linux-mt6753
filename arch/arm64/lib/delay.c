@@ -35,7 +35,7 @@ static inline unsigned long xloops_to_cycles(unsigned long xloops)
 static cycles_t notrace __delay_cycles(void)
 {
 	guard(preempt_notrace)();
-	return __arch_counter_get_cntvct_stable();
+	return __arch_counter_get_cntpct_stable();
 }
 
 void __delay(unsigned long cycles)

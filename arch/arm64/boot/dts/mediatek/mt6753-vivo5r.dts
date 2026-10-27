@@ -102,6 +102,13 @@
 		clock-output-names = "clk26m";
 	};
 
+	clk13m: oscillator-13m {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <13000000>;
+		clock-output-names = "clk13m";
+	};
+
 	timer {
 		compatible = "arm,armv8-timer";
 		interrupt-parent = <&gic>;
@@ -113,6 +120,15 @@
 				     (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>,
 				    <GIC_PPI 10
 				     (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>;
+	};
+
+	mtk_gpt: timer@10004000 {
+		compatible = "mediatek,mt6577-timer";
+		reg = <0 0x10004000 0 0x1000>;
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_SPI 152 IRQ_TYPE_LEVEL_LOW>;
+		clocks = <&clk13m>;
+		clock-names = "timer";
 	};
 
 	memory@40000000 {

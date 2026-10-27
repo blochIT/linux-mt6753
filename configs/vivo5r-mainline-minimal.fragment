@@ -3,6 +3,10 @@
 # device configuration because the MT6753 board DTS and MMC compatible data
 # are still being developed.
 CONFIG_ARCH_MEDIATEK=y
+# MT6753/Cortex-A53 is a pre-LPA2 ARMv8 implementation; keep the first
+# bring-up within the conservative 39-bit VA / 48-bit PA kernel contract.
+CONFIG_ARM64_VA_BITS_39=y
+CONFIG_ARM64_PA_BITS_48=y
 CONFIG_TTY=y
 CONFIG_SERIAL_8250=y
 CONFIG_SERIAL_8250_CONSOLE=y

@@ -60,6 +60,10 @@ An ARM64 `tinyconfig`-based generic image was compiled successfully with the
 minimal fragment at `configs/vivo5r-mainline-minimal.fragment`. Its output is
 kept outside the source tree at
 `/home/admin/linux-mainline-build-tiny/arch/arm64/boot/Image.gz`.
+The fragment explicitly selects the conservative `ARM64_VA_BITS_39` and
+`ARM64_PA_BITS_48` configuration for the MT6753 first-stage bring-up; the
+upstream default VA52/PA52/LPA2 combination is not used on this pre-LPA2
+Cortex-A53 target.
 
 ## Minimal MT6753 board DTS
 

@@ -29,8 +29,8 @@ The vendor DTS identifies the first bring-up facts below:
 
 | Function | Vendor evidence | Mainline status |
 |---|---|---|
-| RAM | `0x40000000`, size `0xc0000000` (3 GiB) | Board DTS to write |
-| UART | `apuart3`, vendor console `ttyMT3` | Try the upstream MT6577-compatible 8250 path at `0x11005000`, IRQ 94 |
+| RAM | `0x40000000`, size `0xc0000000` (3 GiB) | Included in minimal board DTS |
+| UART | `apuart3`, vendor console `ttyMT3` | Minimal DTS uses the upstream MT6577-compatible 8250 path at `0x11005000`, IRQ 94 |
 | eMMC | `mmc0` at vendor MSDC address `0x11230000` | Requires a new MT6753-compatible data path in upstream `mtk-sd` |
 | USB | Vendor USB block at `0x11200000` | Defer until serial and storage boot |
 | Touch | FT8716 on I2C1, reset GPIO62, EINT9 | Defer; use standard FocalTech binding later |
@@ -60,5 +60,24 @@ An ARM64 `tinyconfig`-based generic image was compiled successfully with the
 minimal fragment at `configs/vivo5r-mainline-minimal.fragment`. Its output is
 kept outside the source tree at
 `/home/admin/linux-mainline-build-tiny/arch/arm64/boot/Image.gz`.
-It has no MT6753 board DTB, has not been packaged, booted or flashed, and is
-not yet a phone image.
+
+## Minimal MT6753 board DTS
+
+`arch/arm64/boot/dts/mediatek/mt6753-vivo5r.dts` is the first board
+description. It deliberately contains only the eight Cortex-A53 CPUs, PSCI,
+ARM timer, 3 GiB memory, the MediaTek system-interrupt polarity block, a
+GIC-400 description using the vendor register locations, and `apuart3` at
+`0x11005000`. It is registered in the MediaTek ARM64 DTS Makefile.
+
+The DTB compiles with the current upstream tree and the existing tinyconfig:
+
+- DTB: `/home/admin/linux-mainline-build-tiny/arch/arm64/boot/dts/mediatek/mt6753-vivo5r.dtb`
+- Size: 2258 bytes
+- SHA-256: `d8b84ceb489f53d2f0f5f68a66a771df15378d319d2a9c0050805ab0c90f6506`
+- `Image.gz` remains 1536527 bytes with SHA-256
+  `1bd35b36683ccf883a00cefcc9b3d3d55fe0b19c90e2f95c5e165ec6edb0fe4c`
+
+This is a build/static-validation milestone, not a bootable phone image yet.
+The two-region GIC description and the reuse of the MT6577 sysirq binding are
+explicit hypotheses based on the vendor register map. They must be tested by
+UART before adding eMMC, clocks, pinctrl, USB or a Debian root filesystem.

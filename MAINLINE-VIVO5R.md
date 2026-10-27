@@ -16,23 +16,32 @@ reference and is not merged into this history.
 ## Current support assessment
 
 Upstream contains reusable MediaTek MT6735-family pieces, including clock
-drivers, pinctrl, power-domain definitions, the MTK SD/MMC host, the MTK
-watchdog, MT65xx I2C and MTU3 USB support. It does not currently contain a
-Vivo 5R board DTS or an MT6753 DTS. The closest device-tree references are
-MT6755 and MT6795, but their register maps and boards must not be copied
-without checking them against the vendor DTS and hardware logs.
+drivers, pinctrl, power-domain definitions and the MTK watchdog. It also has
+generic MTK SD/MMC, MT65xx I2C and MTU3 USB frameworks, but the current tree
+does not provide MT6753 compatible data for the SD/MMC driver or a board DTS.
+The MT6577 UART and I2C compatibles may provide reusable fallback paths, but
+that must be validated against the MT6753 register map. The closest complete
+device-tree references are MT6755 and MT6795; their register maps and boards
+must not be copied without checking them against the vendor DTS and hardware
+logs.
 
 The vendor DTS identifies the first bring-up facts below:
 
 | Function | Vendor evidence | Mainline status |
 |---|---|---|
 | RAM | `0x40000000`, size `0xc0000000` (3 GiB) | Board DTS to write |
-| UART | `apuart3`, vendor console `ttyMT3` | Need an upstream-compatible UART node/driver path |
-| eMMC | `mmc0` at vendor MSDC address `0x11230000` | Use upstream `mtk-sd` after clock/reset/pinctrl port |
+| UART | `apuart3`, vendor console `ttyMT3` | Try the upstream MT6577-compatible 8250 path at `0x11005000`, IRQ 94 |
+| eMMC | `mmc0` at vendor MSDC address `0x11230000` | Requires a new MT6753-compatible data path in upstream `mtk-sd` |
 | USB | Vendor USB block at `0x11200000` | Defer until serial and storage boot |
 | Touch | FT8716 on I2C1, reset GPIO62, EINT9 | Defer; use standard FocalTech binding later |
 | Display | FT8716 DSI panel and RT4801 bias | Defer; not required for headless Debian |
 | Wireless | Vendor combo/firmware stack | Defer; first network path may be USB |
+
+The vendor SoC DTS is not a drop-in mainline DTS: it uses vendor-only
+compatibles such as `mediatek,mt6735-gic`, `mediatek,mt6735-uart` and
+`mediatek,mt6753-mmc`, plus vendor clock and pinctrl bindings. These need to
+be translated one subsystem at a time; changing only the compatible strings
+would be unsafe.
 
 ## Bring-up order
 

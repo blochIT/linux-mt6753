@@ -62,8 +62,14 @@ void __init time_init(void)
 	tick_setup_hrtimer_broadcast();
 
 	arch_timer_rate = arch_timer_get_rate();
-	if (!arch_timer_rate)
+	if (!arch_timer_rate) {
+#ifdef CONFIG_MT6753_VIVO5R_BUILTIN_DTB
+		pr_info("MT6753 Vivo 5R: using GPT as the arch-timer fallback\n");
+		arch_timer_rate = 13000000;
+#else
 		panic("Unable to initialise architected timer.\n");
+#endif
+	}
 
 	/* Calibrate the delay loop directly */
 	lpj_fine = arch_timer_rate / HZ;

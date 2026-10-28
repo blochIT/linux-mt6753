@@ -307,13 +307,9 @@ static int mtk_syst_init(struct platform_device *pdev)
 	return 0;
 }
 
-static int mtk_gpt_init(struct platform_device *pdev)
+static int mtk_gpt_init_common(struct device_node *node)
 {
-	struct device_node *node = pdev->dev.of_node;
-	struct clk *clk_bus;
 	int ret;
-
-	clk_bus = devm_clk_get_optional_enabled(&pdev->dev, "bus");
 
 	to.clkevt.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
 	to.clkevt.set_state_shutdown = mtk_gpt_clkevt_shutdown;
@@ -348,6 +344,16 @@ static int mtk_gpt_init(struct platform_device *pdev)
 	return 0;
 }
 
+static int mtk_gpt_init_platform(struct platform_device *pdev)
+{
+	return mtk_gpt_init_common(pdev->dev.of_node);
+}
+static int __init mtk_gpt_init_early(struct device_node *node)
+{
+	pr_info("MT6753 Vivo 5R: enabling MediaTek GPT timer at 13 MHz\n");
+	return mtk_gpt_init_common(node);
+}
+TIMER_OF_DECLARE(mtk_mt6753_vivo5r, "mediatek,mt6753-timer", mtk_gpt_init_early);
 static int mtk_timer_probe(struct platform_device *pdev)
 {
 	int (*timer_init)(struct platform_device *pdev);
@@ -357,7 +363,7 @@ static int mtk_timer_probe(struct platform_device *pdev)
 }
 
 static const struct of_device_id mtk_timer_match_table[] = {
-	{ .compatible = "mediatek,mt6577-timer", .data = mtk_gpt_init },
+	{ .compatible = "mediatek,mt6577-timer", .data = mtk_gpt_init_platform },
 	{ .compatible = "mediatek,mt6765-timer", .data = mtk_syst_init },
 	{ /* sentinel */ }
 };

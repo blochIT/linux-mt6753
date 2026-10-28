@@ -126,7 +126,6 @@
 	mtk_gpt: timer@10004000 {
 		compatible = "mediatek,mt6753-timer";
 		reg = <0 0x10004000 0 0x1000>;
-		interrupt-parent = <&gic>;
 		interrupts = <GIC_SPI 152 IRQ_TYPE_LEVEL_LOW>;
 		clocks = <&clk13m>;
 		clock-names = "timer";

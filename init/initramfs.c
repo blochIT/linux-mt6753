@@ -728,6 +728,13 @@ static void __init unpack_initramfs(async_cookie_t cookie)
 	if (!initrd_start || IS_ENABLED(CONFIG_INITRAMFS_FORCE))
 		return;
 
+	pr_info("vivo5r initrd: start=0x%lx end=0x%lx size=%lu first=%02x %02x %02x %02x %02x %02x %02x %02x\\n",
+		initrd_start, initrd_end, initrd_end - initrd_start,
+		((u8 *)initrd_start)[0], ((u8 *)initrd_start)[1],
+		((u8 *)initrd_start)[2], ((u8 *)initrd_start)[3],
+		((u8 *)initrd_start)[4], ((u8 *)initrd_start)[5],
+		((u8 *)initrd_start)[6], ((u8 *)initrd_start)[7]);
+
 	if (IS_ENABLED(CONFIG_BLK_DEV_RAM))
 		printk(KERN_INFO "Trying to unpack rootfs image as initramfs...\n");
 	else

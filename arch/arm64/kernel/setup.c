@@ -60,6 +60,9 @@ static struct resource *standard_resources;
 
 phys_addr_t __fdt_pointer __initdata;
 u64 mmu_enabled_at_boot __initdata;
+#ifdef CONFIG_MT6753_VIVO5R_BUILTIN_DTB
+extern char __mt6753_vivo5r_dtb_start[];
+#endif
 
 /*
  * Standard memory resources
@@ -285,6 +288,11 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 	*cmdline_p = boot_command_line;
 
 	kaslr_init();
+
+#ifdef CONFIG_MT6753_VIVO5R_BUILTIN_DTB
+  pr_info("MT6753 Vivo 5R: using built-in minimal DTB\n");
+  __fdt_pointer = __pa_symbol(__mt6753_vivo5r_dtb_start);
+#endif
 
 	early_fixmap_init();
 	early_ioremap_init();

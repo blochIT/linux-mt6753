@@ -76,6 +76,10 @@ obj-$(CONFIG_ARM64_MTE)			+= mte.o
 obj-y					+= vdso-wrap.o
 obj-$(CONFIG_COMPAT_VDSO)		+= vdso32-wrap.o
 
+obj-$(CONFIG_MT6753_VIVO5R_BUILTIN_DTB) += vivo5r-dtb.o
+AFLAGS_vivo5r-dtb.o += -DVIVO5R_DTB_PATH=\"$(objtree)/arch/arm64/boot/dts/mediatek/mt6753-vivo5r.dtb\"
+$(obj)/vivo5r-dtb.o: $(objtree)/arch/arm64/boot/dts/mediatek/mt6753-vivo5r.dtb
+
 # Force dependency (vdso*-wrap.S includes vdso.so through incbin)
 $(obj)/vdso-wrap.o: $(obj)/vdso/vdso.so
 $(obj)/vdso32-wrap.o: $(obj)/vdso32/vdso.so

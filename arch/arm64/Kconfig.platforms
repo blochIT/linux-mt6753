@@ -196,6 +196,15 @@ config ARCH_MEDIATEK
 	  This enables support for MediaTek MT27xx, MT65xx, MT76xx
 	  & MT81xx ARMv8 SoCs
 
+config MT6753_VIVO5R_BUILTIN_DTB
+  bool "Built-in DTB for the MT6753 Vivo 5R bring-up"
+  depends on ARCH_MEDIATEK && OF_EARLY_FLATTREE
+  help
+    Embed the minimal MT6753 Vivo 5R device tree in the arm64 kernel and
+    use it instead of the device tree supplied by the bootloader.  This is
+    intended for early bring-up on the Vivo 5R, whose MediaTek bootloader
+    supplies a vendor-only device tree.
+
 config ARCH_MESON
 	bool "Amlogic Platforms"
 	help

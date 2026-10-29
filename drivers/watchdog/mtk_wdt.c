@@ -325,7 +325,9 @@ static int mtk_wdt_ping(struct watchdog_device *wdt_dev)
 	struct mtk_wdt_dev *mtk_wdt = watchdog_get_drvdata(wdt_dev);
 	void __iomem *wdt_base = mtk_wdt->wdt_base;
 
-	iowrite32(WDT_RST_RELOAD, wdt_base + WDT_RST);
+	/* Match the vendor driver's raw write plus post-write barrier. */
+	__raw_writel(WDT_RST_RELOAD, wdt_base + WDT_RST);
+	mb();
 
 	return 0;
 }

@@ -46,6 +46,7 @@
 
 #define WDT_RST			0x08
 #define WDT_RST_RELOAD		0x1971
+#define WDT_STATUS		0x0c
 
 #define WDT_MODE		0x00
 #define WDT_MODE_EN		(1 << 0)
@@ -334,7 +335,7 @@ static void mtk_wdt_keepalive_work(struct work_struct *work)
 	struct mtk_wdt_dev *mtk_wdt = container_of(to_delayed_work(work),
 						  struct mtk_wdt_dev,
 						  keepalive_work);
-	u32 mode;
+	u32 mode, length, status;
 
 	mode = readl(mtk_wdt->wdt_base + WDT_MODE);
 	if (!(mode & WDT_MODE_EN)) {
@@ -345,12 +346,14 @@ static void mtk_wdt_keepalive_work(struct work_struct *work)
 	}
 
 	mtk_wdt_ping(&mtk_wdt->wdt_dev);
+	length = readl(mtk_wdt->wdt_base + WDT_LENGTH);
+	status = readl(mtk_wdt->wdt_base + WDT_STATUS);
 	mtk_wdt->keepalive_count++;
 	if (mtk_wdt->keepalive_count <= 10 ||
 	    !(mtk_wdt->keepalive_count % 10))
 		dev_info(mtk_wdt->wdt_dev.parent,
-			 "keepalive %u: WDT_MODE=0x%08x reloaded\n",
-			 mtk_wdt->keepalive_count, mode);
+			 "keepalive %u: WDT_MODE=0x%08x LENGTH=0x%08x STATUS=0x%08x reloaded\n",
+			 mtk_wdt->keepalive_count, mode, length, status);
 	schedule_delayed_work(&mtk_wdt->keepalive_work,
 				      WDT_KEEPALIVE_INTERVAL);
 }
@@ -426,6 +429,10 @@ static int mtk_wdt_start(struct watchdog_device *wdt_dev)
 		reg &= ~WDT_MODE_EXRST_EN;
 	if (mtk_wdt->reset_by_toprgu)
 		reg |= WDT_MODE_CNT_SEL;
+	if (of_property_read_bool(wdt_dev->parent->of_node,
+				 "mediatek,vivo5r-vendor-wdt-mode"))
+		reg |= WDT_MODE_EXRST_EN | WDT_MODE_IRQ_EN |
+			WDT_MODE_DUAL_EN | WDT_MODE_AUTO_START;
 	reg |= (WDT_MODE_EN | WDT_MODE_KEY);
 	iowrite32(reg, wdt_base + WDT_MODE);
 	spin_unlock_irqrestore(&mtk_wdt->lock, flags);

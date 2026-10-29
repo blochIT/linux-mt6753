@@ -59,7 +59,7 @@
 #define WDT_MODE_CNT_SEL	(1 << 8)
 #define WDT_MODE_KEY		0x22000000
 
-#define WDT_KEEPALIVE_INTERVAL	(5 * HZ)
+#define WDT_KEEPALIVE_INTERVAL	max_t(unsigned long, 1, HZ / 2)
 
 #define MTK_SIP_KERNEL_WDT	0x82000204
 
@@ -88,6 +88,7 @@ struct mtk_wdt_dev {
 	bool disable_wdt_extrst;
 	bool reset_by_toprgu;
 	bool has_swsysrst_en;
+	unsigned int keepalive_count;
 	struct delayed_work keepalive_work;
 	const u8 *toprgu_sw_rst_tb;
 	int toprgu_sw_rst_num;
@@ -333,11 +334,23 @@ static void mtk_wdt_keepalive_work(struct work_struct *work)
 	struct mtk_wdt_dev *mtk_wdt = container_of(to_delayed_work(work),
 						  struct mtk_wdt_dev,
 						  keepalive_work);
+	u32 mode;
 
-	if (!(readl(mtk_wdt->wdt_base + WDT_MODE) & WDT_MODE_EN))
+	mode = readl(mtk_wdt->wdt_base + WDT_MODE);
+	if (!(mode & WDT_MODE_EN)) {
+		dev_warn(mtk_wdt->wdt_dev.parent,
+			 "keepalive %u: WDT_MODE=0x%08x, disabled\n",
+			 mtk_wdt->keepalive_count, mode);
 		return;
+	}
 
 	mtk_wdt_ping(&mtk_wdt->wdt_dev);
+	mtk_wdt->keepalive_count++;
+	if (mtk_wdt->keepalive_count <= 10 ||
+	    !(mtk_wdt->keepalive_count % 10))
+		dev_info(mtk_wdt->wdt_dev.parent,
+			 "keepalive %u: WDT_MODE=0x%08x reloaded\n",
+			 mtk_wdt->keepalive_count, mode);
 	schedule_delayed_work(&mtk_wdt->keepalive_work,
 				      WDT_KEEPALIVE_INTERVAL);
 }
@@ -418,9 +431,14 @@ static int mtk_wdt_start(struct watchdog_device *wdt_dev)
 	spin_unlock_irqrestore(&mtk_wdt->lock, flags);
 
 	if (of_property_read_bool(wdt_dev->parent->of_node,
-				  "mediatek,keepalive-on-probe"))
+				  "mediatek,keepalive-on-probe")) {
+		dev_info(wdt_dev->parent,
+			 "scheduling keepalive interval=%u ms, WDT_MODE=0x%08x\n",
+			 jiffies_to_msecs(WDT_KEEPALIVE_INTERVAL),
+			 ioread32(wdt_base + WDT_MODE));
 		schedule_delayed_work(&mtk_wdt->keepalive_work,
 				      WDT_KEEPALIVE_INTERVAL);
+	}
 
 	return 0;
 }

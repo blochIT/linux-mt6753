@@ -148,12 +148,19 @@ static const struct mtk_wdt_data mt8195_data = {
 
 /*
  * The MediaTek ATF used by this device expects the kernel to register a
- * callback before it considers the kernel WDT ready.  Keep the callback
- * deliberately empty for this bring-up experiment: the goal is only to
- * reproduce the stock registration handshake, not to implement AEE here.
+ * callback before it considers the kernel WDT ready.  The callback
+ * kicks the external watchdog from its no-lock path when ATF enters it.
+ * Keep this callback limited to that FIQ-safe register write; the vendor
+ * AEE dump machinery is outside this driver's scope.
  */
+static void __iomem *mtk_wdt_atf_base;
+
 static void notrace mtk_wdt_atf_callback(void)
 {
+	if (mtk_wdt_atf_base) {
+		__raw_writel(WDT_RST_RELOAD, mtk_wdt_atf_base + WDT_RST);
+		mb();
+	}
 }
 
 static void mtk_wdt_register_atf_callback(struct device *dev)
@@ -589,6 +596,8 @@ static int mtk_wdt_probe(struct platform_device *pdev)
 	mtk_wdt->wdt_base = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(mtk_wdt->wdt_base))
 		return PTR_ERR(mtk_wdt->wdt_base);
+
+	mtk_wdt_atf_base = mtk_wdt->wdt_base;
 
 	if (of_property_read_bool(dev->of_node,
 				 "mediatek,register-atf-wdt-callback"))

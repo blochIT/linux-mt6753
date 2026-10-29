@@ -385,7 +385,9 @@ static void mtk_wdt_init(struct watchdog_device *wdt_dev)
 	 * raises the bark IRQ and the reset comes one timeout later. Apply
 	 * this driver's mode instead, as mtk_wdt_start() does.
 	 */
-	if (readl(wdt_base + WDT_MODE) & WDT_MODE_EN) {
+	if ((readl(wdt_base + WDT_MODE) & WDT_MODE_EN) ||
+	    of_property_read_bool(wdt_dev->parent->of_node,
+				  "mediatek,enable-on-probe")) {
 		set_bit(WDOG_HW_RUNNING, &wdt_dev->status);
 		mtk_wdt_start(wdt_dev);
 	}

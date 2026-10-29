@@ -28,7 +28,7 @@
 		stdout-path = "serial0:921600n8";
 		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 loglevel=8 irqchip.gicv2_force_probe=1 maxcpus=1 init=/init androidboot.hardware=mt6735 androidboot.selinux=permissive vivo5r_init_permissive=1";
 		linux,initrd-start = <0x0 0x4527fa00>;
-		linux,initrd-end = <0x0 0x454bb34a>;
+		linux,initrd-end = <0x0 0x454ba522>;
 	};
 
 	psci {

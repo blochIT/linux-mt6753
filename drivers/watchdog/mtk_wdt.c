@@ -34,6 +34,7 @@
 #include <linux/interrupt.h>
 #include <linux/arm-smccc.h>
 #include <linux/stringify.h>
+#include <linux/workqueue.h>
 
 #define WDT_MAX_TIMEOUT		31
 #define WDT_MIN_TIMEOUT		2
@@ -57,6 +58,8 @@
 #define WDT_MODE_DUAL_EN	(1 << 6)
 #define WDT_MODE_CNT_SEL	(1 << 8)
 #define WDT_MODE_KEY		0x22000000
+
+#define WDT_KEEPALIVE_INTERVAL	(5 * HZ)
 
 #define MTK_SIP_KERNEL_WDT	0x82000204
 
@@ -85,6 +88,7 @@ struct mtk_wdt_dev {
 	bool disable_wdt_extrst;
 	bool reset_by_toprgu;
 	bool has_swsysrst_en;
+	struct delayed_work keepalive_work;
 	const u8 *toprgu_sw_rst_tb;
 	int toprgu_sw_rst_num;
 };
@@ -324,6 +328,20 @@ static int mtk_wdt_ping(struct watchdog_device *wdt_dev)
 	return 0;
 }
 
+static void mtk_wdt_keepalive_work(struct work_struct *work)
+{
+	struct mtk_wdt_dev *mtk_wdt = container_of(to_delayed_work(work),
+						  struct mtk_wdt_dev,
+						  keepalive_work);
+
+	if (!(readl(mtk_wdt->wdt_base + WDT_MODE) & WDT_MODE_EN))
+		return;
+
+	mtk_wdt_ping(&mtk_wdt->wdt_dev);
+	schedule_delayed_work(&mtk_wdt->keepalive_work,
+				      WDT_KEEPALIVE_INTERVAL);
+}
+
 static int mtk_wdt_set_timeout(struct watchdog_device *wdt_dev,
 				unsigned int timeout)
 {
@@ -358,6 +376,10 @@ static int mtk_wdt_stop(struct watchdog_device *wdt_dev)
 	void __iomem *wdt_base = mtk_wdt->wdt_base;
 	unsigned long flags;
 	u32 reg;
+
+	if (of_property_read_bool(wdt_dev->parent->of_node,
+				  "mediatek,keepalive-on-probe"))
+		cancel_delayed_work_sync(&mtk_wdt->keepalive_work);
 
 	spin_lock_irqsave(&mtk_wdt->lock, flags);
 	reg = readl(wdt_base + WDT_MODE);
@@ -395,6 +417,11 @@ static int mtk_wdt_start(struct watchdog_device *wdt_dev)
 	iowrite32(reg, wdt_base + WDT_MODE);
 	spin_unlock_irqrestore(&mtk_wdt->lock, flags);
 
+	if (of_property_read_bool(wdt_dev->parent->of_node,
+				  "mediatek,keepalive-on-probe"))
+		schedule_delayed_work(&mtk_wdt->keepalive_work,
+				      WDT_KEEPALIVE_INTERVAL);
+
 	return 0;
 }
 
@@ -412,7 +439,9 @@ static void mtk_wdt_init(struct watchdog_device *wdt_dev)
 	 */
 	if ((readl(wdt_base + WDT_MODE) & WDT_MODE_EN) ||
 	    of_property_read_bool(wdt_dev->parent->of_node,
-				  "mediatek,enable-on-probe")) {
+				  "mediatek,enable-on-probe") ||
+	    of_property_read_bool(wdt_dev->parent->of_node,
+				  "mediatek,keepalive-on-probe")) {
 		set_bit(WDOG_HW_RUNNING, &wdt_dev->status);
 		mtk_wdt_start(wdt_dev);
 	}
@@ -526,6 +555,7 @@ static int mtk_wdt_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	spin_lock_init(&mtk_wdt->lock);
+	INIT_DELAYED_WORK(&mtk_wdt->keepalive_work, mtk_wdt_keepalive_work);
 
 	platform_set_drvdata(pdev, mtk_wdt);
 

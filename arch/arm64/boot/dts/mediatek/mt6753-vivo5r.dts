@@ -136,7 +136,7 @@
 	watchdog: watchdog@10007000 {
 		compatible = "mediatek,mt6735-wdt";
 		reg = <0 0x10007000 0 0x100>;
-		mediatek,enable-on-probe;
+		mediatek,register-atf-wdt-callback;
 	};
 
 	memory@40000000 {

@@ -32,6 +32,7 @@
 #include <linux/types.h>
 #include <linux/watchdog.h>
 #include <linux/interrupt.h>
+#include <linux/arm-smccc.h>
 #include <linux/stringify.h>
 
 #define WDT_MAX_TIMEOUT		31
@@ -56,6 +57,8 @@
 #define WDT_MODE_DUAL_EN	(1 << 6)
 #define WDT_MODE_CNT_SEL	(1 << 8)
 #define WDT_MODE_KEY		0x22000000
+
+#define MTK_SIP_KERNEL_WDT	0x82000204
 
 #define WDT_SWRST		0x14
 #define WDT_SWRST_KEY		0x1209
@@ -136,6 +139,28 @@ static const struct mtk_wdt_data mt8192_data = {
 static const struct mtk_wdt_data mt8195_data = {
 	.toprgu_sw_rst_num = MT8195_TOPRGU_SW_RST_NUM,
 };
+
+/*
+ * The MediaTek ATF used by this device expects the kernel to register a
+ * callback before it considers the kernel WDT ready.  Keep the callback
+ * deliberately empty for this bring-up experiment: the goal is only to
+ * reproduce the stock registration handshake, not to implement AEE here.
+ */
+static void notrace mtk_wdt_atf_callback(void)
+{
+}
+
+static void mtk_wdt_register_atf_callback(struct device *dev)
+{
+	struct arm_smccc_res res;
+
+	arm_smccc_smc(MTK_SIP_KERNEL_WDT,
+		      (unsigned long)mtk_wdt_atf_callback, 0, 0,
+		      0, 0, 0, 0, &res);
+
+	dev_info(dev, "ATF WDT callback registration returned 0x%lx\n",
+		 res.a0);
+}
 
 static const u8 mt8167_toprgu_sw_rst_tb[] = {
 	[MT8167_TOPRGU_DDRPHY_FLASH_RST]	= 0,
@@ -507,6 +532,10 @@ static int mtk_wdt_probe(struct platform_device *pdev)
 	mtk_wdt->wdt_base = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(mtk_wdt->wdt_base))
 		return PTR_ERR(mtk_wdt->wdt_base);
+
+	if (of_property_read_bool(dev->of_node,
+				 "mediatek,register-atf-wdt-callback"))
+		mtk_wdt_register_atf_callback(dev);
 
 	irq = platform_get_irq_optional(pdev, 0);
 	if (irq > 0) {

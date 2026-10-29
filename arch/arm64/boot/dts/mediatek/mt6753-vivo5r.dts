@@ -136,7 +136,6 @@
 	watchdog: watchdog@10212000 {
 		compatible = "mediatek,mt6735-wdt";
 		reg = <0 0x10212000 0 0x1000>;
-		interrupts = <GIC_SPI 128 IRQ_TYPE_EDGE_FALLING>;
 		mediatek,register-atf-wdt-callback;
 		mediatek,keepalive-on-probe;
 		mediatek,vivo5r-vendor-wdt-mode;

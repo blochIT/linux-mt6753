@@ -514,7 +514,7 @@ int __mmc_poll_for_busy(struct mmc_host *host, unsigned int period_us,
 {
 	int err;
 	unsigned long timeout;
-	unsigned int udelay = period_us ? period_us : 32, udelay_max = 32768;
+	unsigned int delay_us = period_us ? period_us : 32, delay_us_max = 32768;
 	bool expired = false;
 	bool busy = false;
 
@@ -539,9 +539,10 @@ int __mmc_poll_for_busy(struct mmc_host *host, unsigned int period_us,
 
 		/* Throttle the polling rate to avoid hogging the CPU. */
 		if (busy) {
-			usleep_range(udelay, udelay * 2);
-			if (udelay < udelay_max)
-				udelay *= 2;
+			pr_info("Vivo5R mmc poll busy: delay=%u us\n", delay_us);
+			udelay(delay_us);
+			if (delay_us < delay_us_max)
+				delay_us *= 2;
 		}
 	} while (busy);
 

@@ -199,6 +199,8 @@
 		clock-names = "source", "hclk";
 		bus-width = <8>;
 		non-removable;
+		no-sdio;
+		no-sd;
 		max-frequency = <26000000>;
 		mediatek,no-pinctrl;
 		status = "okay";

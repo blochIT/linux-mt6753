@@ -1345,6 +1345,11 @@ static void msdc_request_done(struct msdc_host *host, struct mmc_request *mrq)
 	unsigned long flags;
 	bool hsq_req_done;
 
+	dev_info(host->dev, "Vivo5R MSDC request_done begin cmd=%u data=%d data_err=%d bytes=%u host_error=0x%x\n",
+		 mrq->cmd->opcode, mrq->data != NULL,
+		 mrq->data ? mrq->data->error : 0,
+		 mrq->data ? mrq->data->bytes_xfered : 0, host->error);
+
 	/*
 	 * No need check the return value of cancel_delayed_work, as only ONE
 	 * path will go here!
@@ -1381,7 +1386,11 @@ static void msdc_request_done(struct msdc_host *host, struct mmc_request *mrq)
 		msdc_unprepare_data(host, mrq->data);
 	if (host->error)
 		msdc_reset_hw(host);
+	dev_info(host->dev, "Vivo5R MSDC request_done before mmc_request_done cmd=%u\n",
+		 mrq->cmd->opcode);
 	mmc_request_done(mmc, mrq);
+	dev_info(host->dev, "Vivo5R MSDC request_done after mmc_request_done cmd=%u\n",
+		 mrq->cmd->opcode);
 	if (host->dev_comp->recheck_sdio_irq)
 		msdc_recheck_sdio_irq(host);
 }
@@ -1625,6 +1634,9 @@ static void msdc_data_xfer_done(struct msdc_host *host, u32 events,
 	u32 val;
 	int ret;
 
+	dev_info(host->dev, "Vivo5R MSDC data_done begin events=0x%08x check=0x%08x data=%p dma_cfg=0x%08x\n",
+		 events, check_data, data, readl(host->base + MSDC_DMA_CFG));
+
 	spin_lock_irqsave(&host->lock, flags);
 	done = !host->data;
 	if (check_data)
@@ -1643,11 +1655,15 @@ static void msdc_data_xfer_done(struct msdc_host *host, u32 events,
 
 		ret = readl_poll_timeout_atomic(host->base + MSDC_DMA_CTRL, val,
 						!(val & MSDC_DMA_CTRL_STOP), 1, 20000);
+		dev_info(host->dev, "Vivo5R MSDC data_done dma_stop ret=%d val=0x%08x\n",
+			 ret, val);
 		if (ret)
 			dev_dbg(host->dev, "DMA stop timed out\n");
 
 		ret = readl_poll_timeout_atomic(host->base + MSDC_DMA_CFG, val,
 						!(val & MSDC_DMA_CFG_STS), 1, 20000);
+		dev_info(host->dev, "Vivo5R MSDC data_done dma_inactive ret=%d val=0x%08x\n",
+			 ret, val);
 		if (ret)
 			dev_dbg(host->dev, "DMA inactive timed out\n");
 
@@ -1673,7 +1689,11 @@ static void msdc_data_xfer_done(struct msdc_host *host, u32 events,
 				(int)data->error, data->bytes_xfered);
 		}
 
+		dev_info(host->dev, "Vivo5R MSDC data_done next cmd=%u data_err=%d bytes=%u\n",
+			 mrq->cmd->opcode, data->error, data->bytes_xfered);
 		msdc_data_xfer_next(host, mrq);
+		dev_info(host->dev, "Vivo5R MSDC data_done next returned cmd=%u\n",
+			 mrq->cmd->opcode);
 	}
 }
 

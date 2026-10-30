@@ -2179,6 +2179,8 @@ static void msdc_ops_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 	struct msdc_host *host = mmc_priv(mmc);
 	int ret;
 
+	dev_info(host->dev, "Vivo5R MSDC set_ios power=%u clock=%u timing=%u\n",
+		 ios->power_mode, ios->clock, ios->timing);
 	msdc_set_buswidth(host, ios->bus_width);
 
 	/* Suspend/Resume will do power off/on */
@@ -2218,6 +2220,7 @@ static void msdc_ops_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 
 	if (host->mclk != ios->clock || host->timing != ios->timing)
 		msdc_set_mclk(host, ios->timing, ios->clock);
+	dev_info(host->dev, "Vivo5R MSDC set_ios complete\n");
 }
 
 static u64 test_delay_bit(u64 delay, u32 bit)

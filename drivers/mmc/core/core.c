@@ -1008,7 +1008,9 @@ void mmc_set_initial_state(struct mmc_host *host)
 	     host->ops->hs400_enhanced_strobe)
 		host->ops->hs400_enhanced_strobe(host, &host->ios);
 
+	pr_info("Vivo5R mmc_initial_state: set_ios\n");
 	mmc_set_ios(host);
+	pr_info("Vivo5R mmc_initial_state: set_ios complete\n");
 
 	mmc_crypto_set_initial_state(host);
 }
@@ -1340,14 +1342,20 @@ void mmc_power_up(struct mmc_host *host, u32 ocr)
 	if (host->ios.power_mode == MMC_POWER_ON)
 		return;
 
+	pr_info("Vivo5R mmc_power_up: pwrseq pre\n");
 	mmc_pwrseq_pre_power_on(host);
+	pr_info("Vivo5R mmc_power_up: pwrseq pre complete\n");
 
 	host->ios.vdd = fls(ocr) - 1;
 	host->ios.power_mode = MMC_POWER_UP;
 	/* Set initial state and call mmc_set_ios */
+	pr_info("Vivo5R mmc_power_up: initial state\n");
 	mmc_set_initial_state(host);
+	pr_info("Vivo5R mmc_power_up: initial state complete\n");
 
+	pr_info("Vivo5R mmc_power_up: initial signal voltage\n");
 	mmc_set_initial_signal_voltage(host);
+	pr_info("Vivo5R mmc_power_up: initial signal voltage complete\n");
 
 	/*
 	 * This delay should be sufficient to allow the power supply
@@ -1355,12 +1363,17 @@ void mmc_power_up(struct mmc_host *host, u32 ocr)
 	 */
 	mmc_delay(host->ios.power_delay_ms);
 
+	pr_info("Vivo5R mmc_power_up: pwrseq post\n");
 	mmc_pwrseq_post_power_on(host);
+	pr_info("Vivo5R mmc_power_up: pwrseq post complete\n");
 
 	host->ios.clock = host->f_init;
 
 	host->ios.power_mode = MMC_POWER_ON;
+	pr_info("Vivo5R mmc_power_up: final set_ios clock=%u\n",
+		host->ios.clock);
 	mmc_set_ios(host);
+	pr_info("Vivo5R mmc_power_up: final set_ios complete\n");
 
 	/*
 	 * This delay must be at least 74 clock sizes, or 1 ms, or the

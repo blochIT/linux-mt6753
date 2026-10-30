@@ -1040,6 +1040,7 @@ static void msdc_set_mclk(struct msdc_host *host, unsigned char timing, u32 hz)
 	u32 sclk;
 	u32 tune_reg = host->dev_comp->pad_tune_reg;
 	u32 val;
+	int ret;
 	bool timing_changed;
 
 	if (!hz) {
@@ -1117,7 +1118,15 @@ static void msdc_set_mclk(struct msdc_host *host, unsigned char timing, u32 hz)
 			      (mode << 12) | div);
 
 	clk_prepare_enable(host->src_clk_cg);
-	readl_poll_timeout(host->base + MSDC_CFG, val, (val & MSDC_CFG_CKSTB), 0, 0);
+	ret = readl_poll_timeout(host->base + MSDC_CFG, val,
+				 (val & MSDC_CFG_CKSTB), 1, 20000);
+	if (ret)
+		dev_warn(host->dev,
+			 "Vivo5R MSDC clock stable timeout: cfg=0x%08x ret=%d\n",
+			 readl(host->base + MSDC_CFG), ret);
+	else
+		dev_info(host->dev,
+			 "Vivo5R MSDC clock stable: cfg=0x%08x\n", val);
 	sdr_set_bits(host->base + MSDC_CFG, MSDC_CFG_CKPDN);
 	mmc->actual_clock = sclk;
 	host->mclk = hz;

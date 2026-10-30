@@ -2119,7 +2119,9 @@ static int mmc_rescan_try_freq(struct mmc_host *host, unsigned freq)
 	pr_debug("%s: %s: trying to init card at %u Hz\n",
 		mmc_hostname(host), __func__, host->f_init);
 
+	pr_info("Vivo5R mmc_rescan_try_freq: power_up freq=%u\n", freq);
 	mmc_power_up(host, host->ocr_avail);
+	pr_info("Vivo5R mmc_rescan_try_freq: power_up complete\n");
 
 	/*
 	 * Some eMMCs (with VCCQ always on) may not be reset after power up, so
@@ -2136,7 +2138,9 @@ static int mmc_rescan_try_freq(struct mmc_host *host, unsigned freq)
 	if (!(host->caps2 & MMC_CAP2_NO_SDIO))
 		sdio_reset(host);
 
+	pr_info("Vivo5R mmc_rescan_try_freq: go_idle\n");
 	mmc_go_idle(host);
+	pr_info("Vivo5R mmc_rescan_try_freq: go_idle complete\n");
 
 	if (!(host->caps2 & MMC_CAP2_NO_SD)) {
 		if (mmc_send_if_cond_pcie(host, host->ocr_avail))
@@ -2154,9 +2158,15 @@ static int mmc_rescan_try_freq(struct mmc_host *host, unsigned freq)
 		if (!mmc_attach_sd(host))
 			return 0;
 
-	if (!(host->caps2 & MMC_CAP2_NO_MMC))
-		if (!mmc_attach_mmc(host))
+	if (!(host->caps2 & MMC_CAP2_NO_MMC)) {
+		int err;
+
+		pr_info("Vivo5R mmc_rescan_try_freq: attach_mmc\n");
+		err = mmc_attach_mmc(host);
+		pr_info("Vivo5R mmc_rescan_try_freq: attach_mmc returned %d\n", err);
+		if (!err)
 			return 0;
+	}
 
 out:
 	mmc_power_off(host);

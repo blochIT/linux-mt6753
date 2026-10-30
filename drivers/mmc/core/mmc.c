@@ -2404,11 +2404,16 @@ int mmc_attach_mmc(struct mmc_host *host)
 
 	WARN_ON(!host->claimed);
 
+	pr_info("Vivo5R mmc_attach_mmc: begin\n");
+
 	/* Set correct bus mode for MMC before attempting attach */
 	if (!mmc_host_is_spi(host))
 		mmc_set_bus_mode(host, MMC_BUSMODE_OPENDRAIN);
 
+	pr_info("Vivo5R mmc_attach_mmc: send_op_cond\n");
 	err = mmc_send_op_cond(host, 0, &ocr);
+	pr_info("Vivo5R mmc_attach_mmc: send_op_cond returned %d ocr=%08X\n",
+		err, ocr);
 	if (err)
 		return err;
 

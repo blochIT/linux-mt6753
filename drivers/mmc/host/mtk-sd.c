@@ -1513,6 +1513,9 @@ static void msdc_start_command(struct msdc_host *host,
 	cmd->error = 0;
 	rawcmd = msdc_cmd_prepare_raw_cmd(host, mrq, cmd);
 
+	dev_info(host->dev, "Vivo5R MSDC start: cmd=%u arg=%08X rawcmd=%08X\n",
+		 cmd->opcode, cmd->arg, rawcmd);
+
 	spin_lock_irqsave(&host->lock, flags);
 	sdr_set_bits(host->base + MSDC_INTEN, cmd_ints_mask);
 	spin_unlock_irqrestore(&host->lock, flags);
@@ -1541,6 +1544,9 @@ static void msdc_ops_request(struct mmc_host *mmc, struct mmc_request *mrq)
 {
 	struct msdc_host *host = mmc_priv(mmc);
 
+	dev_info(host->dev, "Vivo5R MSDC request: cmd=%u arg=%08X flags=%08X data=%d\n",
+		 mrq->cmd->opcode, mrq->cmd->arg, mrq->cmd->flags,
+		 mrq->data != NULL);
 	host->error = 0;
 	WARN_ON(!host->hsq_en && host->mrq);
 	host->mrq = mrq;
@@ -1740,6 +1746,8 @@ static void msdc_request_timeout(struct work_struct *work)
 
 	/* simulate HW timeout status */
 	dev_err(host->dev, "%s: aborting cmd/data/mrq\n", __func__);
+	dev_info(host->dev, "Vivo5R MSDC timeout: mrq=%p cmd=%d\n",
+		 host->mrq, host->mrq ? host->mrq->cmd->opcode : -1);
 	if (host->mrq) {
 		dev_err(host->dev, "%s: aborting mrq=%p cmd=%d\n", __func__,
 				host->mrq, host->mrq->cmd->opcode);
@@ -1867,6 +1875,10 @@ static irqreturn_t msdc_irq(int irq, void *dev_id)
 		cmd = host->cmd;
 		data = host->data;
 		spin_unlock(&host->lock);
+
+		if (events & event_mask)
+			dev_info(host->dev, "Vivo5R MSDC IRQ: events=%08X mask=%08X cmd=%d\n",
+				 events, event_mask, cmd ? cmd->opcode : -1);
 
 		if ((events & event_mask) & MSDC_INT_SDIOIRQ)
 			sdio_signal_irq(mmc);

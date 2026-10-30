@@ -436,6 +436,7 @@ struct gendisk *mmc_init_queue(struct mmc_queue *mq, struct mmc_card *card,
 	struct gendisk *disk;
 	int ret;
 
+	pr_info("Vivo5R mmc_queue: init enter features=0x%x\n", features);
 	mq->card = card;
 	
 	spin_lock_init(&mq->lock);
@@ -471,12 +472,14 @@ struct gendisk *mmc_init_queue(struct mmc_queue *mq, struct mmc_card *card,
 	else
 		host->can_dma_map_merge = 0;
 
+	pr_info("Vivo5R mmc_queue: before blk_mq_alloc_tag_set\n");
 	ret = blk_mq_alloc_tag_set(&mq->tag_set);
 	pr_info("Vivo5R mmc_queue: tag_set returned %d\n", ret);
 	if (ret)
 		return ERR_PTR(ret);
 		
 
+	pr_info("Vivo5R mmc_queue: before mmc_alloc_disk\n");
 	disk = mmc_alloc_disk(mq, card, features);
 	pr_info("Vivo5R mmc_queue: mmc_alloc_disk returned %ld\n",
 		IS_ERR(disk) ? PTR_ERR(disk) : 0L);

@@ -2488,7 +2488,11 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 	char cap_str[10];
 	unsigned int features = 0;
 
+	pr_info("Vivo5R mmcblk: alloc_req enter area=%d part=%u size=%llu subname=%s\n",
+		area_type, part_type, (unsigned long long)size,
+		subname ? subname : "<main>");
 	devidx = ida_alloc_max(&mmc_blk_ida, max_devices - 1, GFP_KERNEL);
+	pr_info("Vivo5R mmcblk: alloc_req ida returned %d\n", devidx);
 	if (devidx < 0) {
 		/*
 		 * We get -ENOSPC because there are no more any available
@@ -2505,6 +2509,7 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 	}
 
 	md = kzalloc_obj(*md);
+	pr_info("Vivo5R mmcblk: alloc_req kzalloc returned %p\n", md);
 	if (!md) {
 		ret = -ENOMEM;
 		goto out;
@@ -2530,7 +2535,10 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 		features |= BLK_FEAT_WRITE_CACHE;
 	}
 
+	pr_info("Vivo5R mmcblk: alloc_req before mmc_init_queue\n");
 	md->disk = mmc_init_queue(&md->queue, card, features);
+	pr_info("Vivo5R mmcblk: alloc_req mmc_init_queue returned %ld\n",
+		IS_ERR(md->disk) ? PTR_ERR(md->disk) : 0L);
 	if (IS_ERR(md->disk)) {
 		ret = PTR_ERR(md->disk);
 		goto err_kfree;
@@ -2602,6 +2610,8 @@ static struct mmc_blk_data *mmc_blk_alloc(struct mmc_card *card)
 {
 	sector_t size;
 
+	pr_info("Vivo5R mmcblk: alloc enter blockaddr=%d\n",
+		mmc_card_blockaddr(card));
 	if (!mmc_card_sd(card) && mmc_card_blockaddr(card)) {
 		/*
 		 * The EXT_CSD sector count is in number or 512 byte
@@ -2616,6 +2626,8 @@ static struct mmc_blk_data *mmc_blk_alloc(struct mmc_card *card)
 		size = (typeof(sector_t))card->csd.capacity
 			<< (card->csd.read_blkbits - 9);
 	}
+	pr_info("Vivo5R mmcblk: alloc size computed=%llu\n",
+		(unsigned long long)size);
 
 	return mmc_blk_alloc_req(card, &card->dev, size, false, NULL,
 					MMC_BLK_DATA_AREA_MAIN, 0);
@@ -3219,16 +3231,22 @@ static int mmc_blk_probe(struct mmc_card *card)
 	if (!(card->csd.cmdclass & CCC_BLOCK_READ))
 		return -ENODEV;
 
+	pr_info("Vivo5R mmcblk: before fixup\n");
 	mmc_fixup_device(card, mmc_blk_fixups);
+	pr_info("Vivo5R mmcblk: after fixup\n");
 
+	pr_info("Vivo5R mmcblk: before completion workqueue\n");
 	card->complete_wq = alloc_workqueue("mmc_complete",
 					WQ_MEM_RECLAIM | WQ_HIGHPRI | WQ_PERCPU,
 					0);
+	pr_info("Vivo5R mmcblk: completion workqueue returned %p\n",
+		card->complete_wq);
 	if (!card->complete_wq) {
 		pr_err("Failed to create mmc completion workqueue");
 		return -ENOMEM;
 	}
 
+	pr_info("Vivo5R mmcblk: before main allocation\n");
 	md = mmc_blk_alloc(card);
 	pr_info("Vivo5R mmcblk: main allocation returned %ld\n",
 		IS_ERR(md) ? PTR_ERR(md) : 0L);

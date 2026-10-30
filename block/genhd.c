@@ -408,8 +408,13 @@ static void add_disk_final(struct gendisk *disk)
 
 	if (!(disk->flags & GENHD_FL_HIDDEN)) {
 		bdev_add(disk->part0, ddev->devt);
-		if (get_capacity(disk))
+		if (get_capacity(disk)) {
+			pr_info("Vivo5R genhd: before disk_scan_partitions %s\n",
+				disk->disk_name);
 			disk_scan_partitions(disk, BLK_OPEN_READ);
+			pr_info("Vivo5R genhd: disk_scan_partitions complete %s\n",
+				disk->disk_name);
+		}
 
 		/*
 		 * Announce the disk and partitions after all partitions are
@@ -496,7 +501,10 @@ static int __add_disk(struct device *parent, struct gendisk *disk,
 		device_set_node(ddev, fwnode);
 	if (!(disk->flags & GENHD_FL_HIDDEN))
 		ddev->devt = MKDEV(disk->major, disk->first_minor);
+	pr_info("Vivo5R genhd: before device_add %s\n", disk->disk_name);
 	ret = device_add(ddev);
+	pr_info("Vivo5R genhd: device_add returned %d for %s\n",
+		ret, disk->disk_name);
 	if (ret)
 		goto out_free_ext_minor;
 
@@ -528,13 +536,21 @@ static int __add_disk(struct device *parent, struct gendisk *disk,
 		goto out_put_holder_dir;
 	}
 
+	pr_info("Vivo5R genhd: before blk_register_queue %s\n",
+		disk->disk_name);
 	ret = blk_register_queue(disk);
+	pr_info("Vivo5R genhd: blk_register_queue returned %d for %s\n",
+		ret, disk->disk_name);
 	if (ret)
 		goto out_put_slave_dir;
 
 	if (!(disk->flags & GENHD_FL_HIDDEN)) {
+		pr_info("Vivo5R genhd: before bdi_register %s\n",
+			disk->disk_name);
 		ret = bdi_register(disk->bdi, "%u:%u",
 				   disk->major, disk->first_minor);
+		pr_info("Vivo5R genhd: bdi_register returned %d for %s\n",
+			ret, disk->disk_name);
 		if (ret)
 			goto out_unregister_queue;
 		bdi_set_owner(disk->bdi, ddev);
@@ -597,7 +613,11 @@ int __must_check add_disk_fwnode(struct device *parent, struct gendisk *disk,
 		set = disk->queue->tag_set;
 		memflags = memalloc_noio_save();
 		down_read(&set->update_nr_hwq_lock);
+		pr_info("Vivo5R genhd: before __add_disk %s\n",
+			disk->disk_name);
 		ret = __add_disk(parent, disk, groups, fwnode);
+		pr_info("Vivo5R genhd: __add_disk returned %d for %s\n",
+			ret, disk->disk_name);
 		up_read(&set->update_nr_hwq_lock);
 		memalloc_noio_restore(memflags);
 	} else {
@@ -609,8 +629,13 @@ int __must_check add_disk_fwnode(struct device *parent, struct gendisk *disk,
 	 * of read lock `set->update_nr_hwq_lock` for avoiding unnecessary
 	 * lock dependency on `disk->open_mutex` from scanning partition.
 	 */
-	if (!ret)
+	if (!ret) {
+		pr_info("Vivo5R genhd: before add_disk_final %s\n",
+			disk->disk_name);
 		add_disk_final(disk);
+		pr_info("Vivo5R genhd: add_disk_final complete %s\n",
+			disk->disk_name);
+	}
 	return ret;
 }
 EXPORT_SYMBOL_GPL(add_disk_fwnode);

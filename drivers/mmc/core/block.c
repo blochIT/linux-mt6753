@@ -2582,6 +2582,8 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 	disk_fwnode = mmc_blk_get_partitions_node(parent, subname);
 	ret = add_disk_fwnode(md->parent, md->disk, mmc_disk_attr_groups,
 			      disk_fwnode);
+	pr_info("Vivo5R mmcblk: add_disk returned %d for %s\n",
+		ret, md->disk->disk_name);
 	if (ret)
 		goto err_put_disk;
 	return md;
@@ -2945,10 +2947,15 @@ static int mmc_blk_alloc_parts(struct mmc_card *card, struct mmc_blk_data *md)
 {
 	int idx, ret;
 
+	pr_info("Vivo5R mmcblk: allocating %u physical parts\n", card->nr_parts);
+
 	if (!mmc_card_mmc(card))
 		return 0;
 
 	for (idx = 0; idx < card->nr_parts; idx++) {
+		pr_info("Vivo5R mmcblk: part %u name=%s area=0x%x size=%llu\n",
+			idx, card->part[idx].name, card->part[idx].area_type,
+			(unsigned long long)card->part[idx].size);
 		if (card->part[idx].area_type & MMC_BLK_DATA_AREA_RPMB) {
 			/*
 			 * RPMB partitions does not provide block access, they
@@ -3204,6 +3211,8 @@ static int mmc_blk_probe(struct mmc_card *card)
 	struct mmc_blk_data *md;
 	int ret = 0;
 
+	pr_info("Vivo5R mmcblk: probe begin nr_parts=%u\n", card->nr_parts);
+
 	/*
 	 * Check that the card supports the command class(es) we need.
 	 */
@@ -3221,12 +3230,15 @@ static int mmc_blk_probe(struct mmc_card *card)
 	}
 
 	md = mmc_blk_alloc(card);
+	pr_info("Vivo5R mmcblk: main allocation returned %ld\n",
+		IS_ERR(md) ? PTR_ERR(md) : 0L);
 	if (IS_ERR(md)) {
 		ret = PTR_ERR(md);
 		goto out_free;
 	}
 
 	ret = mmc_blk_alloc_parts(card, md);
+	pr_info("Vivo5R mmcblk: physical parts returned %d\n", ret);
 	if (ret)
 		goto out;
 
@@ -3246,6 +3258,7 @@ static int mmc_blk_probe(struct mmc_card *card)
 	}
 
 	mmc_blk_rpmb_add(card);
+	pr_info("Vivo5R mmcblk: probe complete\n");
 
 	return 0;
 

@@ -358,6 +358,8 @@ static void mtk_wdt_keepalive_work(struct work_struct *work)
 	length = readl(mtk_wdt->wdt_base + WDT_LENGTH);
 	status = readl(mtk_wdt->wdt_base + WDT_STATUS);
 	mtk_wdt->keepalive_count++;
+	dev_info(mtk_wdt->wdt_dev.parent,
+		 "keepalive tick %u completed\n", mtk_wdt->keepalive_count);
 	if (mtk_wdt->keepalive_count <= 10 ||
 	    !(mtk_wdt->keepalive_count % 10))
 		dev_info(mtk_wdt->wdt_dev.parent,

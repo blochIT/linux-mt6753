@@ -11,6 +11,8 @@
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/clock/mediatek,mt6735-pericfg.h>
+#include <dt-bindings/clock/mediatek,mt6735-topckgen.h>
 
 / {
 	model = "Blu Vivo 5R";
@@ -111,6 +113,24 @@
 		clock-output-names = "clk13m";
 	};
 
+	apmixedsys: clock-controller@10209000 {
+		compatible = "mediatek,mt6735-apmixedsys";
+		reg = <0 0x10209000 0 0x1000>;
+		#clock-cells = <1>;
+	};
+
+	topckgen: clock-controller@10210000 {
+		compatible = "mediatek,mt6735-topckgen";
+		reg = <0 0x10210000 0 0x1000>;
+		#clock-cells = <1>;
+	};
+
+	pericfg: clock-controller@10002000 {
+		compatible = "mediatek,mt6735-pericfg";
+		reg = <0 0x10002000 0 0x1000>;
+		#clock-cells = <1>;
+	};
+
 	timer {
 		compatible = "arm,armv8-timer";
 		status = "disabled";
@@ -167,6 +187,20 @@
 		reg = <0 0x11005000 0 0x400>;
 		interrupts = <GIC_SPI 94 IRQ_TYPE_LEVEL_LOW>;
 		clocks = <&clk26m>;
+		status = "okay";
+	};
+
+	mmc0: mmc@11230000 {
+		compatible = "mediatek,mt6753-mmc";
+		reg = <0 0x11230000 0 0x10000>;
+		interrupts = <GIC_SPI 79 IRQ_TYPE_LEVEL_LOW>;
+		clocks = <&pericfg CLK_PERI_MSDC30_0>,
+			 <&topckgen CLK_TOP_AXI_SEL>;
+		clock-names = "source", "hclk";
+		bus-width = <8>;
+		non-removable;
+		max-frequency = <26000000>;
+		mediatek,no-pinctrl;
 		status = "okay";
 	};
 };

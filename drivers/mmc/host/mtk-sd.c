@@ -490,6 +490,7 @@ struct msdc_host {
 	struct pinctrl_state *pins_default;
 	struct pinctrl_state *pins_uhs;
 	struct pinctrl_state *pins_eint;
+	bool no_pinctrl;
 	struct delayed_work req_timeout;
 	int irq;		/* host interrupt */
 	int eint_irq;		/* interrupt from sdio device for waking up system */
@@ -572,6 +573,20 @@ static const struct mtk_mmc_compatible mt6795_compat = {
 	.recheck_sdio_irq = false,
 	.hs400_tune = true,
 	.pad_tune_reg = MSDC_PAD_TUNE,
+	.async_fifo = false,
+	.data_tune = false,
+	.busy_check = false,
+	.stop_clk_fix = false,
+	.enhance_rx = false,
+	.support_64g = false,
+};
+
+/* MT6735/MT6753 use the older MSDC register layout. */
+static const struct mtk_mmc_compatible mt6735_compat = {
+	.clk_div_bits = 8,
+	.recheck_sdio_irq = true,
+	.hs400_tune = true,
+	.pad_tune_reg = MSDC_PAD_TUNE0,
 	.async_fifo = false,
 	.data_tune = false,
 	.busy_check = false,
@@ -713,6 +728,8 @@ static const struct mtk_mmc_compatible mt8196_compat = {
 };
 
 static const struct of_device_id msdc_of_ids[] = {
+	{ .compatible = "mediatek,mt6735-mmc", .data = &mt6735_compat},
+	{ .compatible = "mediatek,mt6753-mmc", .data = &mt6735_compat},
 	{ .compatible = "mediatek,mt2701-mmc", .data = &mt2701_compat},
 	{ .compatible = "mediatek,mt2712-mmc", .data = &mt2712_compat},
 	{ .compatible = "mediatek,mt6779-mmc", .data = &mt6779_compat},
@@ -1680,6 +1697,8 @@ static int msdc_ops_switch_volt(struct mmc_host *mmc, struct mmc_ios *ios)
 		}
 
 		/* Apply different pinctrl settings for different signal voltage */
+		if (host->no_pinctrl)
+			return 0;
 		if (ios->signal_voltage == MMC_SIGNAL_VOLTAGE_180)
 			pinctrl_select_state(host->pinctrl, host->pins_uhs);
 		else
@@ -3038,21 +3057,25 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	if (host->irq < 0)
 		return host->irq;
 
-	host->pinctrl = devm_pinctrl_get(&pdev->dev);
-	if (IS_ERR(host->pinctrl))
-		return dev_err_probe(&pdev->dev, PTR_ERR(host->pinctrl),
-				     "Cannot find pinctrl");
+	host->no_pinctrl = of_property_read_bool(pdev->dev.of_node,
+						 "mediatek,no-pinctrl");
+	if (!host->no_pinctrl) {
+		host->pinctrl = devm_pinctrl_get(&pdev->dev);
+		if (IS_ERR(host->pinctrl))
+			return dev_err_probe(&pdev->dev, PTR_ERR(host->pinctrl),
+					     "Cannot find pinctrl");
 
-	host->pins_default = pinctrl_lookup_state(host->pinctrl, "default");
-	if (IS_ERR(host->pins_default)) {
-		dev_err(&pdev->dev, "Cannot find pinctrl default!\n");
-		return PTR_ERR(host->pins_default);
-	}
+		host->pins_default = pinctrl_lookup_state(host->pinctrl, "default");
+		if (IS_ERR(host->pins_default)) {
+			dev_err(&pdev->dev, "Cannot find pinctrl default!\n");
+			return PTR_ERR(host->pins_default);
+		}
 
-	host->pins_uhs = pinctrl_lookup_state(host->pinctrl, "state_uhs");
-	if (IS_ERR(host->pins_uhs)) {
-		dev_err(&pdev->dev, "Cannot find pinctrl uhs!\n");
-		return PTR_ERR(host->pins_uhs);
+		host->pins_uhs = pinctrl_lookup_state(host->pinctrl, "state_uhs");
+		if (IS_ERR(host->pins_uhs)) {
+			dev_err(&pdev->dev, "Cannot find pinctrl uhs!\n");
+			return PTR_ERR(host->pins_uhs);
+		}
 	}
 
 	/* Support for SDIO eint irq ? */

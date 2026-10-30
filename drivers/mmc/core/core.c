@@ -1381,7 +1381,7 @@ void mmc_power_up(struct mmc_host *host, u32 ocr)
 	 */
 	pr_info("Vivo5R mmc_power_up: final delay %u ms\n",
 		host->ios.power_delay_ms);
-	mmc_delay(host->ios.power_delay_ms);
+	udelay(host->ios.power_delay_ms * 1000);
 	pr_info("Vivo5R mmc_power_up: final delay complete\n");
 }
 

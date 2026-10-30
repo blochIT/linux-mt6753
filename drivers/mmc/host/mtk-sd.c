@@ -3170,8 +3170,11 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	dev_info(&pdev->dev, "Vivo5R MSDC clocks enabled\n");
 	msdc_init_hw(host);
 	dev_info(&pdev->dev, "Vivo5R MSDC hardware initialized\n");
+	dev_info(&pdev->dev, "Vivo5R MSDC post-init: caps2=0x%x cqhci=%d\n",
+		 mmc->caps2, host->cqhci);
 
 	if (mmc->caps2 & MMC_CAP2_CQE) {
+		dev_info(&pdev->dev, "Vivo5R MSDC entering CQE setup\n");
 		host->cq_host = devm_kzalloc(mmc->parent,
 					     sizeof(*host->cq_host),
 					     GFP_KERNEL);
@@ -3191,8 +3194,10 @@ static int msdc_drv_probe(struct platform_device *pdev)
 		mmc->max_seg_size = 64 * 1024;
 		/* Reduce CIT to 0x40 that corresponds to 2.35us */
 		msdc_cqe_cit_cal(host, 2350);
+		dev_info(&pdev->dev, "Vivo5R MSDC CQE setup complete\n");
 	} else if (mmc->caps2 & MMC_CAP2_NO_SDIO) {
 		/* Use HSQ on eMMC/SD (but not on SDIO) if HW CQE not supported */
+		dev_info(&pdev->dev, "Vivo5R MSDC entering HSQ setup\n");
 		struct mmc_hsq *hsq = devm_kzalloc(&pdev->dev, sizeof(*hsq), GFP_KERNEL);
 		if (!hsq) {
 			ret = -ENOMEM;
@@ -3204,18 +3209,23 @@ static int msdc_drv_probe(struct platform_device *pdev)
 			goto release;
 
 		host->hsq_en = true;
+		dev_info(&pdev->dev, "Vivo5R MSDC HSQ setup complete\n");
 	}
 
+	dev_info(&pdev->dev, "Vivo5R MSDC requesting IRQ %d\n", host->irq);
 	ret = devm_request_irq(&pdev->dev, host->irq, msdc_irq,
 			       IRQF_TRIGGER_NONE, pdev->name, host);
 	if (ret)
 		goto release;
+	dev_info(&pdev->dev, "Vivo5R MSDC IRQ requested\n");
 
 	pm_runtime_set_active(host->dev);
 	pm_runtime_set_autosuspend_delay(host->dev, MTK_MMC_AUTOSUSPEND_DELAY);
 	pm_runtime_use_autosuspend(host->dev);
 	pm_runtime_enable(host->dev);
+	dev_info(&pdev->dev, "Vivo5R MSDC adding MMC host\n");
 	ret = mmc_add_host(mmc);
+	dev_info(&pdev->dev, "Vivo5R MSDC mmc_add_host returned %d\n", ret);
 
 	if (ret)
 		goto end;

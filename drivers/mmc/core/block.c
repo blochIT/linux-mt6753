@@ -2587,9 +2587,15 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 	/* used in ->open, must be set before add_disk: */
 	if (area_type == MMC_BLK_DATA_AREA_MAIN)
 		dev_set_drvdata(&card->dev, md);
+	pr_info("Vivo5R mmcblk: before partitions node for %s\n",
+		md->disk->disk_name);
 	disk_fwnode = mmc_blk_get_partitions_node(parent, subname);
+	pr_info("Vivo5R mmcblk: before add_disk for %s fwnode=%p\n",
+		md->disk->disk_name, disk_fwnode);
 	ret = add_disk_fwnode(md->parent, md->disk, mmc_disk_attr_groups,
 			      disk_fwnode);
+	pr_info("Vivo5R mmcblk: add_disk call complete for %s\n",
+		md->disk->disk_name);
 	pr_info("Vivo5R mmcblk: add_disk returned %d for %s\n",
 		ret, md->disk->disk_name);
 	if (ret)
@@ -3255,6 +3261,7 @@ static int mmc_blk_probe(struct mmc_card *card)
 		goto out_free;
 	}
 
+	pr_info("Vivo5R mmcblk: before physical parts\n");
 	ret = mmc_blk_alloc_parts(card, md);
 	pr_info("Vivo5R mmcblk: physical parts returned %d\n", ret);
 	if (ret)
@@ -3275,6 +3282,7 @@ static int mmc_blk_probe(struct mmc_card *card)
 		pm_runtime_enable(&card->dev);
 	}
 
+	pr_info("Vivo5R mmcblk: before RPMB registration\n");
 	mmc_blk_rpmb_add(card);
 	pr_info("Vivo5R mmcblk: probe complete\n");
 

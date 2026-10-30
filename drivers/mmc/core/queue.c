@@ -451,6 +451,8 @@ struct gendisk *mmc_init_queue(struct mmc_queue *mq, struct mmc_card *card,
 			min_t(int, card->ext_csd.cmdq_depth, host->cqe_qdepth);
 	else
 		mq->tag_set.queue_depth = MMC_QUEUE_DEPTH;
+	pr_info("Vivo5R mmc_queue: depth=%u cqe=%d hsq=%d before tag_set\n",
+		mq->tag_set.queue_depth, host->cqe_enabled, host->hsq_enabled);
 	mq->tag_set.numa_node = NUMA_NO_NODE;
 	mq->tag_set.flags = BLK_MQ_F_BLOCKING;
 	mq->tag_set.nr_hw_queues = 1;
@@ -470,11 +472,14 @@ struct gendisk *mmc_init_queue(struct mmc_queue *mq, struct mmc_card *card,
 		host->can_dma_map_merge = 0;
 
 	ret = blk_mq_alloc_tag_set(&mq->tag_set);
+	pr_info("Vivo5R mmc_queue: tag_set returned %d\n", ret);
 	if (ret)
 		return ERR_PTR(ret);
 		
 
 	disk = mmc_alloc_disk(mq, card, features);
+	pr_info("Vivo5R mmc_queue: mmc_alloc_disk returned %ld\n",
+		IS_ERR(disk) ? PTR_ERR(disk) : 0L);
 	if (IS_ERR(disk))
 		blk_mq_free_tag_set(&mq->tag_set);
 	return disk;

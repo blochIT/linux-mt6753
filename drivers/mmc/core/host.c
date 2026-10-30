@@ -653,19 +653,25 @@ int mmc_add_host(struct mmc_host *host)
 {
 	int err;
 
+	pr_info("Vivo5R mmc_add_host: validating caps\n");
 	err = mmc_validate_host_caps(host);
 	if (err)
 		return err;
 
+	pr_info("Vivo5R mmc_add_host: device_add\n");
 	err = device_add(&host->class_dev);
 	if (err)
 		return err;
+	pr_info("Vivo5R mmc_add_host: device_add complete\n");
 
 	led_trigger_register_simple(dev_name(&host->class_dev), &host->led);
 
 	mmc_add_host_debugfs(host);
+	pr_info("Vivo5R mmc_add_host: debugfs complete\n");
 
+	pr_info("Vivo5R mmc_add_host: starting host\n");
 	mmc_start_host(host);
+	pr_info("Vivo5R mmc_add_host: start complete\n");
 	return 0;
 }
 

@@ -2341,17 +2341,23 @@ void mmc_start_host(struct mmc_host *host)
 	bool power_up = !(host->caps2 &
 			 (MMC_CAP2_NO_PRESCAN_POWERUP | MMC_CAP2_SD_UHS2));
 
+	pr_info("Vivo5R mmc_start_host: begin caps2=0x%x power_up=%d\n",
+		host->caps2, power_up);
 	host->f_init = max(min(freqs[0], host->f_max), host->f_min);
 	host->rescan_disable = 0;
 
 	if (power_up) {
+		pr_info("Vivo5R mmc_start_host: power_up\n");
 		mmc_claim_host(host);
 		mmc_power_up(host, host->ocr_avail);
 		mmc_release_host(host);
+		pr_info("Vivo5R mmc_start_host: power_up complete\n");
 	}
 
+	pr_info("Vivo5R mmc_start_host: detect change\n");
 	mmc_gpiod_request_cd_irq(host);
 	_mmc_detect_change(host, 0, false);
+	pr_info("Vivo5R mmc_start_host: detect change queued\n");
 }
 
 void __mmc_stop_host(struct mmc_host *host)

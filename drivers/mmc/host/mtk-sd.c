@@ -784,13 +784,21 @@ static void sdr_get_field(void __iomem *reg, u32 field, u32 *val)
 static void msdc_reset_hw(struct msdc_host *host)
 {
 	u32 val;
+	int ret;
 
 	sdr_set_bits(host->base + MSDC_CFG, MSDC_CFG_RST);
-	readl_poll_timeout_atomic(host->base + MSDC_CFG, val, !(val & MSDC_CFG_RST), 0, 0);
+	ret = readl_poll_timeout_atomic(host->base + MSDC_CFG, val,
+				       !(val & MSDC_CFG_RST), 0, 20000);
+	if (ret)
+		dev_warn(host->dev, "MSDC_CFG reset did not clear: val=0x%08x ret=%d\n",
+			 host->dev ? readl(host->base + MSDC_CFG) : val, ret);
 
 	sdr_set_bits(host->base + MSDC_FIFOCS, MSDC_FIFOCS_CLR);
-	readl_poll_timeout_atomic(host->base + MSDC_FIFOCS, val,
-				  !(val & MSDC_FIFOCS_CLR), 0, 0);
+	ret = readl_poll_timeout_atomic(host->base + MSDC_FIFOCS, val,
+				       !(val & MSDC_FIFOCS_CLR), 0, 20000);
+	if (ret)
+		dev_warn(host->dev, "MSDC_FIFOCS clear did not complete: val=0x%08x ret=%d\n",
+			 host->dev ? readl(host->base + MSDC_FIFOCS) : val, ret);
 
 	val = readl(host->base + MSDC_INT);
 	writel(val, host->base + MSDC_INT);
@@ -3003,6 +3011,7 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	struct mmc_host *mmc;
 	struct msdc_host *host;
 	int ret;
+	dev_info(&pdev->dev, "Vivo5R MSDC probe start\n");
 
 	if (!pdev->dev.of_node) {
 		dev_err(&pdev->dev, "No DT found\n");
@@ -3038,6 +3047,8 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	ret = msdc_of_clock_parse(pdev, host);
 	if (ret)
 		return ret;
+	dev_info(&pdev->dev, "Vivo5R MSDC clocks parsed: source=%lu hclk=%lu\n",
+		 clk_get_rate(host->src_clk), clk_get_rate(host->h_clk));
 
 	host->reset = devm_reset_control_get_optional_exclusive(&pdev->dev,
 								"hrst");
@@ -3150,12 +3161,15 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	spin_lock_init(&host->lock);
 
 	platform_set_drvdata(pdev, mmc);
+	dev_info(&pdev->dev, "Vivo5R MSDC enabling clocks\n");
 	ret = msdc_ungate_clock(host);
 	if (ret) {
 		dev_err(&pdev->dev, "Cannot ungate clocks!\n");
 		goto release_clk;
 	}
+	dev_info(&pdev->dev, "Vivo5R MSDC clocks enabled\n");
 	msdc_init_hw(host);
+	dev_info(&pdev->dev, "Vivo5R MSDC hardware initialized\n");
 
 	if (mmc->caps2 & MMC_CAP2_CQE) {
 		host->cq_host = devm_kzalloc(mmc->parent,

@@ -120,13 +120,13 @@
 	};
 
 	topckgen: clock-controller@10210000 {
-		compatible = "mediatek,mt6735-topckgen";
+		compatible = "mediatek,mt6735-topckgen", "syscon";
 		reg = <0 0x10210000 0 0x1000>;
 		#clock-cells = <1>;
 	};
 
 	pericfg: clock-controller@10002000 {
-		compatible = "mediatek,mt6735-pericfg";
+		compatible = "mediatek,mt6735-pericfg", "syscon";
 		reg = <0 0x10002000 0 0x1000>;
 		#clock-cells = <1>;
 	};

@@ -953,17 +953,27 @@ int blk_register_queue(struct gendisk *disk)
 	unsigned int memflags;
 	int ret;
 
+	pr_info("Vivo5R blkq: before kobject_add %s\n", disk->disk_name);
 	ret = kobject_add(&disk->queue_kobj, &disk_to_dev(disk)->kobj, "queue");
+	pr_info("Vivo5R blkq: kobject_add returned %d for %s\n",
+		ret, disk->disk_name);
 	if (ret < 0)
 		return ret;
 
 	if (queue_is_mq(q)) {
+		pr_info("Vivo5R blkq: before blk_mq_sysfs_register %s\n",
+			disk->disk_name);
 		ret = blk_mq_sysfs_register(disk);
+		pr_info("Vivo5R blkq: blk_mq_sysfs_register returned %d for %s\n",
+			ret, disk->disk_name);
 		if (ret)
 			goto out_del_queue_kobj;
 	}
+	pr_info("Vivo5R blkq: before sysfs mutex %s\n", disk->disk_name);
 	mutex_lock(&q->sysfs_lock);
+	pr_info("Vivo5R blkq: sysfs mutex acquired %s\n", disk->disk_name);
 
+	pr_info("Vivo5R blkq: before debugfs %s\n", disk->disk_name);
 	memflags = blk_debugfs_lock(q);
 	q->debugfs_dir = debugfs_create_dir(disk->disk_name, blk_debugfs_root);
 	if (IS_ENABLED(CONFIG_BLK_ERROR_INJECTION))
@@ -971,6 +981,7 @@ int blk_register_queue(struct gendisk *disk)
 	if (queue_is_mq(q))
 		blk_mq_debugfs_register(q);
 	blk_debugfs_unlock(q, memflags);
+	pr_info("Vivo5R blkq: debugfs complete %s\n", disk->disk_name);
 
 	/*
 	 * For blk-mq rotational zoned devices, default to using QD=1
@@ -980,22 +991,36 @@ int blk_register_queue(struct gendisk *disk)
 	if (queue_is_mq(q) && blk_queue_rot(q) && blk_queue_is_zoned(q))
 		blk_queue_flag_set(QUEUE_FLAG_ZONED_QD1_WRITES, q);
 
+	pr_info("Vivo5R blkq: before independent access ranges %s\n",
+		disk->disk_name);
 	ret = disk_register_independent_access_ranges(disk);
+	pr_info("Vivo5R blkq: independent access ranges returned %d for %s\n",
+		ret, disk->disk_name);
 	if (ret)
 		goto out_debugfs_remove;
 
+	pr_info("Vivo5R blkq: before crypto sysfs %s\n", disk->disk_name);
 	ret = blk_crypto_sysfs_register(disk);
+	pr_info("Vivo5R blkq: crypto sysfs returned %d for %s\n",
+		ret, disk->disk_name);
 	if (ret)
 		goto out_unregister_ia_ranges;
 
-	if (queue_is_mq(q))
+	if (queue_is_mq(q)) {
+		pr_info("Vivo5R blkq: before elevator %s\n", disk->disk_name);
 		elevator_set_default(q);
+		pr_info("Vivo5R blkq: elevator complete %s\n", disk->disk_name);
+	}
 
 	blk_queue_flag_set(QUEUE_FLAG_REGISTERED, q);
+	pr_info("Vivo5R blkq: before wbt %s\n", disk->disk_name);
 	wbt_init_enable_default(disk);
+	pr_info("Vivo5R blkq: wbt complete %s\n", disk->disk_name);
 
 	/* Now everything is ready and send out KOBJ_ADD uevent */
+	pr_info("Vivo5R blkq: before queue uevent %s\n", disk->disk_name);
 	kobject_uevent(&disk->queue_kobj, KOBJ_ADD);
+	pr_info("Vivo5R blkq: queue uevent complete %s\n", disk->disk_name);
 	if (q->elevator)
 		kobject_uevent(&q->elevator->kobj, KOBJ_ADD);
 	mutex_unlock(&q->sysfs_lock);
@@ -1009,8 +1034,10 @@ int blk_register_queue(struct gendisk *disk)
 	 * faster to shut down and is made fully functional here as
 	 * request_queues for non-existent devices never get registered.
 	 */
+	pr_info("Vivo5R blkq: before init done %s\n", disk->disk_name);
 	blk_queue_flag_set(QUEUE_FLAG_INIT_DONE, q);
 	percpu_ref_switch_to_percpu(&q->q_usage_counter);
+	pr_info("Vivo5R blkq: init done complete %s\n", disk->disk_name);
 
 	return ret;
 

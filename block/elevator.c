@@ -735,7 +735,9 @@ void elevator_set_default(struct request_queue *q)
 	int err;
 
 	/* now we allow to switch elevator */
+	pr_info("Vivo5R elv: before clear no-switch %s\n", q->disk ? q->disk->disk_name : "<no-disk>");
 	blk_queue_flag_clear(QUEUE_FLAG_NO_ELV_SWITCH, q);
+	pr_info("Vivo5R elv: no-switch clear complete\n");
 
 	if (q->tag_set->flags & BLK_MQ_F_NO_SCHED_BY_DEFAULT)
 		return;
@@ -745,18 +747,24 @@ void elevator_set_default(struct request_queue *q)
 	 * have multiple queues or mq-deadline is not available, default
 	 * to "none".
 	 */
+	pr_info("Vivo5R elv: before find %s\n", ctx.name);
 	ctx.type = elevator_find_get(ctx.name);
+	pr_info("Vivo5R elv: find returned %p\n", ctx.type);
 	if (!ctx.type)
 		return;
 
+	pr_info("Vivo5R elv: queues=%u shared=%d before change\n",
+		q->nr_hw_queues, blk_mq_is_shared_tags(q->tag_set->flags));
 	if ((q->nr_hw_queues == 1 ||
 			blk_mq_is_shared_tags(q->tag_set->flags))) {
 		err = elevator_change(q, &ctx);
+		pr_info("Vivo5R elv: elevator_change returned %d\n", err);
 		if (err < 0)
 			pr_warn("\"%s\" elevator initialization, failed %d, falling back to \"none\"\n",
 					ctx.name, err);
 	}
 	elevator_put(ctx.type);
+	pr_info("Vivo5R elv: elevator complete\n");
 }
 
 void elevator_set_none(struct request_queue *q)

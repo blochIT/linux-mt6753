@@ -403,8 +403,11 @@ void wakeme_after_rcu(struct rcu_head *head)
 {
 	struct rcu_synchronize *rcu;
 
+	pr_info("Vivo5R RCU: wakeme_after_rcu enter\n");
 	rcu = container_of(head, struct rcu_synchronize, head);
+	pr_info("Vivo5R RCU: before complete\n");
 	complete(&rcu->completion);
+	pr_info("Vivo5R RCU: after complete\n");
 }
 EXPORT_SYMBOL_GPL(wakeme_after_rcu);
 

@@ -552,12 +552,17 @@ int blk_mq_alloc_sched_res(struct request_queue *q,
 {
 	struct blk_mq_tag_set *set = q->tag_set;
 
+	pr_info("Vivo5R sched: alloc_res enter nr_hw_queues=%u\n", nr_hw_queues);
+	pr_info("Vivo5R sched: before alloc tags\n");
 	res->et = blk_mq_alloc_sched_tags(set, nr_hw_queues,
 			blk_mq_default_nr_requests(set));
+	pr_info("Vivo5R sched: alloc tags returned %p\n", res->et);
 	if (!res->et)
 		return -ENOMEM;
 
+	pr_info("Vivo5R sched: before alloc data\n");
 	res->data = blk_mq_alloc_sched_data(q, type);
+	pr_info("Vivo5R sched: alloc data returned %p\n", res->data);
 	if (IS_ERR(res->data)) {
 		blk_mq_free_sched_tags(res->et, set);
 		return -ENOMEM;

@@ -1659,7 +1659,9 @@ static void __synchronize_srcu(struct srcu_struct *ssp, bool do_norm)
 {
 	struct rcu_synchronize rcu;
 
+	pr_info("Vivo5R SRCU: __synchronize enter\n");
 	srcu_lock_sync(&ssp->dep_map);
+	pr_info("Vivo5R SRCU: srcu_lock_sync complete\n");
 
 	RCU_LOCKDEP_WARN(lockdep_is_held(ssp) ||
 			 lock_is_held(&rcu_bh_lock_map) ||
@@ -1675,11 +1677,16 @@ static void __synchronize_srcu(struct srcu_struct *ssp, bool do_norm)
 		return;
 	}
 	might_sleep();
+	pr_info("Vivo5R SRCU: before check_init\n");
 	check_init_srcu_struct(ssp, false);
 	init_completion(&rcu.completion);
 	init_rcu_head_on_stack(&rcu.head);
+	pr_info("Vivo5R SRCU: before call_srcu\n");
 	__call_srcu(ssp, &rcu.head, wakeme_after_rcu, do_norm);
+	pr_info("Vivo5R SRCU: call_srcu complete\n");
+	pr_info("Vivo5R SRCU: before wait_for_completion\n");
 	wait_for_completion(&rcu.completion);
+	pr_info("Vivo5R SRCU: wait_for_completion complete\n");
 	destroy_rcu_head_on_stack(&rcu.head);
 
 	/*
@@ -1690,6 +1697,7 @@ static void __synchronize_srcu(struct srcu_struct *ssp, bool do_norm)
 	 * (and thus unordered against) that grace period.
 	 */
 	smp_mb();
+	pr_info("Vivo5R SRCU: return\n");
 }
 
 /**
@@ -1759,10 +1767,14 @@ EXPORT_SYMBOL_GPL(synchronize_srcu_expedited);
  */
 void synchronize_srcu(struct srcu_struct *ssp)
 {
-	if (srcu_should_expedite(ssp) || rcu_gp_is_expedited())
+	pr_info("Vivo5R SRCU: synchronize enter\n");
+	if (srcu_should_expedite(ssp) || rcu_gp_is_expedited()) {
+		pr_info("Vivo5R SRCU: expedited path\n");
 		synchronize_srcu_expedited(ssp);
-	else
+	} else {
+		pr_info("Vivo5R SRCU: normal path\n");
 		__synchronize_srcu(ssp, true);
+	}
 }
 EXPORT_SYMBOL_GPL(synchronize_srcu);
 

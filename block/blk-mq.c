@@ -298,10 +298,16 @@ EXPORT_SYMBOL_GPL(blk_mq_wait_quiesce_done);
  */
 void blk_mq_quiesce_queue(struct request_queue *q)
 {
+	pr_info("Vivo5R quiesce: enter\n");
+	pr_info("Vivo5R quiesce: before nowait\n");
 	blk_mq_quiesce_queue_nowait(q);
+	pr_info("Vivo5R quiesce: nowait complete\n");
 	/* nothing to wait for non-mq queues */
-	if (queue_is_mq(q))
+	if (queue_is_mq(q)) {
+		pr_info("Vivo5R quiesce: before wait\n");
 		blk_mq_wait_quiesce_done(q->tag_set);
+		pr_info("Vivo5R quiesce: wait complete\n");
+	}
 }
 EXPORT_SYMBOL_GPL(blk_mq_quiesce_queue);
 

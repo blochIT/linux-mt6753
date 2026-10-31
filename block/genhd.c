@@ -365,8 +365,11 @@ int disk_scan_partitions(struct gendisk *disk, blk_mode_t mode)
 	struct file *file;
 	int ret = 0;
 
+	pr_info("Vivo5R scan: enter %s mode=0x%x\n", disk->disk_name, mode);
+	pr_info("Vivo5R scan: before partscan check %s\n", disk->disk_name);
 	if (!disk_has_partscan(disk))
 		return -EINVAL;
+	pr_info("Vivo5R scan: partscan check complete %s\n", disk->disk_name);
 	if (disk->open_partitions)
 		return -EBUSY;
 
@@ -377,19 +380,28 @@ int disk_scan_partitions(struct gendisk *disk, blk_mode_t mode)
 	 * scanners.
 	 */
 	if (!(mode & BLK_OPEN_EXCL)) {
+		pr_info("Vivo5R scan: before claim %s\n", disk->disk_name);
 		ret = bd_prepare_to_claim(disk->part0, disk_scan_partitions,
 					  NULL);
+		pr_info("Vivo5R scan: claim returned %d %s\n", ret,
+				disk->disk_name);
 		if (ret)
 			return ret;
 	}
 
 	set_bit(GD_NEED_PART_SCAN, &disk->state);
+	pr_info("Vivo5R scan: before bdev open %s\n", disk->disk_name);
 	file = bdev_file_open_by_dev(disk_devt(disk), mode & ~BLK_OPEN_EXCL,
 				     NULL, NULL);
+	pr_info("Vivo5R scan: bdev open returned %p %s\n", file,
+			disk->disk_name);
 	if (IS_ERR(file))
 		ret = PTR_ERR(file);
-	else
+	else {
+		pr_info("Vivo5R scan: before fput %s\n", disk->disk_name);
 		fput(file);
+		pr_info("Vivo5R scan: fput complete %s\n", disk->disk_name);
+	}
 
 	/*
 	 * If blkdev_get_by_dev() failed early, GD_NEED_PART_SCAN is still set,
@@ -397,8 +409,12 @@ int disk_scan_partitions(struct gendisk *disk, blk_mode_t mode)
 	 * creat partition for underlying disk.
 	 */
 	clear_bit(GD_NEED_PART_SCAN, &disk->state);
-	if (!(mode & BLK_OPEN_EXCL))
+	if (!(mode & BLK_OPEN_EXCL)) {
+		pr_info("Vivo5R scan: before abort claim %s\n", disk->disk_name);
 		bd_abort_claiming(disk->part0, disk_scan_partitions);
+		pr_info("Vivo5R scan: abort claim complete %s\n", disk->disk_name);
+	}
+	pr_info("Vivo5R scan: return %d %s\n", ret, disk->disk_name);
 	return ret;
 }
 

@@ -509,12 +509,17 @@ struct elevator_tags *blk_mq_alloc_sched_tags(struct blk_mq_tag_set *set,
 	struct elevator_tags *et;
 	gfp_t gfp = GFP_NOIO | __GFP_ZERO | __GFP_NOWARN | __GFP_NORETRY;
 
+	pr_info("Vivo5R sched tags: enter hw=%u requests=%u shared=%u\n",
+		nr_hw_queues, nr_requests, blk_mq_is_shared_tags(set->flags));
+
 	if (blk_mq_is_shared_tags(set->flags))
 		nr_tags = 1;
 	else
 		nr_tags = nr_hw_queues;
 
+	pr_info("Vivo5R sched tags: before flex nr_tags=%u\n", nr_tags);
 	et = kmalloc_flex(*et, tags, nr_tags, gfp);
+	pr_info("Vivo5R sched tags: flex returned %p\n", et);
 	if (!et)
 		return NULL;
 
@@ -523,19 +528,25 @@ struct elevator_tags *blk_mq_alloc_sched_tags(struct blk_mq_tag_set *set,
 
 	if (blk_mq_is_shared_tags(set->flags)) {
 		/* Shared tags are stored at index 0 in @tags. */
+		pr_info("Vivo5R sched tags: before map shared\n");
 		et->tags[0] = blk_mq_alloc_map_and_rqs(set, BLK_MQ_NO_HCTX_IDX,
 					MAX_SCHED_RQ);
+		pr_info("Vivo5R sched tags: map shared returned %p\n", et->tags[0]);
 		if (!et->tags[0])
 			goto out;
 	} else {
 		for (i = 0; i < et->nr_hw_queues; i++) {
+			pr_info("Vivo5R sched tags: before map hw=%d\n", i);
 			et->tags[i] = blk_mq_alloc_map_and_rqs(set, i,
 					et->nr_requests);
+			pr_info("Vivo5R sched tags: map hw=%d returned %p\n",
+				i, et->tags[i]);
 			if (!et->tags[i])
 				goto out_unwind;
 		}
 	}
 
+	pr_info("Vivo5R sched tags: return\n");
 	return et;
 out_unwind:
 	while (--i >= 0)

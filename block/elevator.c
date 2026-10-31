@@ -564,16 +564,23 @@ static int elevator_switch(struct request_queue *q, struct elv_change_ctx *ctx)
 	struct elevator_type *new_e = NULL;
 	int ret = 0;
 
+	pr_info("Vivo5R switch: enter\n");
+	pr_info("Vivo5R switch: before assertions\n");
 	WARN_ON_ONCE(q->mq_freeze_depth == 0);
 	lockdep_assert_held(&q->elevator_lock);
+	pr_info("Vivo5R switch: assertions complete\n");
 
 	if (strncmp(ctx->name, "none", 4)) {
+		pr_info("Vivo5R switch: before find\n");
 		new_e = elevator_find_get(ctx->name);
+		pr_info("Vivo5R switch: find returned %p\n", new_e);
 		if (!new_e)
 			return -EINVAL;
 	}
 
+	pr_info("Vivo5R switch: before quiesce\n");
 	blk_mq_quiesce_queue(q);
+	pr_info("Vivo5R switch: quiesce complete\n");
 
 	if (q->elevator) {
 		ctx->old = q->elevator;

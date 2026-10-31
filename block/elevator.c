@@ -656,7 +656,9 @@ static int elevator_change(struct request_queue *q, struct elv_change_ctx *ctx)
 	struct blk_mq_tag_set *set = q->tag_set;
 	int ret = 0;
 
+	pr_info("Vivo5R elv: elevator_change enter q=%p ctx=%p\n", q, ctx);
 	lockdep_assert_held(&set->update_nr_hwq_lock);
+	pr_info("Vivo5R elv: lockdep assertion complete\n");
 
 	if (strncmp(ctx->name, "none", 4)) {
 		pr_info("Vivo5R elv: before alloc sched res %s\n", ctx->name);

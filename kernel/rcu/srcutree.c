@@ -2254,6 +2254,7 @@ static void srcu_invoke_callbacks(struct work_struct *work)
 	struct srcu_struct *ssp;
 
 	sdp = container_of(work, struct srcu_data, work);
+	pr_info("Vivo5R SRCU: invoke callbacks enter\n");
 
 	ssp = sdp->ssp;
 	rcu_cblist_init(&ready_cbs);
@@ -2268,6 +2269,7 @@ static void srcu_invoke_callbacks(struct work_struct *work)
 	 */
 	if (sdp->srcu_cblist_invoking ||
 	    !rcu_segcblist_ready_cbs(&sdp->srcu_cblist)) {
+		pr_info("Vivo5R SRCU: invoke callbacks no ready\n");
 		raw_spin_unlock_irq_rcu_node(sdp);
 		return;  /* Someone else on the job or nothing to do. */
 	}
@@ -2276,6 +2278,7 @@ static void srcu_invoke_callbacks(struct work_struct *work)
 	sdp->srcu_cblist_invoking = true;
 	rcu_segcblist_extract_done_cbs(&sdp->srcu_cblist, &ready_cbs);
 	len = ready_cbs.len;
+	pr_info("Vivo5R SRCU: invoke callbacks ready len=%ld\n", len);
 	raw_spin_unlock_irq_rcu_node(sdp);
 	rhp = rcu_cblist_dequeue(&ready_cbs);
 	for (; rhp != NULL; rhp = rcu_cblist_dequeue(&ready_cbs)) {
@@ -2299,6 +2302,7 @@ static void srcu_invoke_callbacks(struct work_struct *work)
 	/* An SRCU barrier or callbacks from previous nesting work pending */
 	if (more)
 		srcu_schedule_cbs_sdp(sdp, 0);
+	pr_info("Vivo5R SRCU: invoke callbacks return\n");
 }
 
 /*
@@ -2338,8 +2342,10 @@ static void process_srcu(struct work_struct *work)
 
 	sup = container_of(work, struct srcu_usage, work.work);
 	ssp = sup->srcu_ssp;
+	pr_info("Vivo5R SRCU: process enter\n");
 
 	srcu_advance_state(ssp, false);
+	pr_info("Vivo5R SRCU: process advanced\n");
 	raw_spin_lock_irq_rcu_node(ssp->srcu_sup);
 	curdelay = srcu_get_delay(ssp);
 	raw_spin_unlock_irq_rcu_node(ssp->srcu_sup);
@@ -2358,6 +2364,7 @@ static void process_srcu(struct work_struct *work)
 		}
 	}
 	srcu_reschedule(ssp, curdelay);
+	pr_info("Vivo5R SRCU: process return\n");
 }
 
 static void srcu_irq_work(struct irq_work *work)

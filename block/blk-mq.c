@@ -280,10 +280,17 @@ EXPORT_SYMBOL_GPL(blk_mq_quiesce_queue_nowait);
  */
 void blk_mq_wait_quiesce_done(struct blk_mq_tag_set *set)
 {
-	if (set->flags & BLK_MQ_F_BLOCKING)
+	pr_info("Vivo5R quiesce wait: enter flags=0x%x\n", set->flags);
+	if (set->flags & BLK_MQ_F_BLOCKING) {
+		pr_info("Vivo5R quiesce wait: before synchronize_srcu\n");
 		synchronize_srcu(set->srcu);
-	else
+		pr_info("Vivo5R quiesce wait: synchronize_srcu complete\n");
+	} else {
+		pr_info("Vivo5R quiesce wait: before synchronize_rcu\n");
 		synchronize_rcu();
+		pr_info("Vivo5R quiesce wait: synchronize_rcu complete\n");
+	}
+	pr_info("Vivo5R quiesce wait: return\n");
 }
 EXPORT_SYMBOL_GPL(blk_mq_wait_quiesce_done);
 

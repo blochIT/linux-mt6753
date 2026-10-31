@@ -3569,22 +3569,31 @@ static struct blk_mq_tags *blk_mq_alloc_rq_map(struct blk_mq_tag_set *set,
 	if (node == NUMA_NO_NODE)
 		node = set->numa_node;
 
+	pr_info("Vivo5R rq_map: enter node=%d tags=%u reserved=%u\n",
+		node, nr_tags, reserved_tags);
+	pr_info("Vivo5R rq_map: before init_tags\n");
 	tags = blk_mq_init_tags(nr_tags, reserved_tags, set->flags, node);
+	pr_info("Vivo5R rq_map: init_tags returned %p\n", tags);
 	if (!tags)
 		return NULL;
 
+	pr_info("Vivo5R rq_map: before rqs array\n");
 	tags->rqs = kcalloc_node(nr_tags, sizeof(struct request *),
 				 GFP_NOIO | __GFP_NOWARN | __GFP_NORETRY,
 				 node);
+	pr_info("Vivo5R rq_map: rqs array returned %p\n", tags->rqs);
 	if (!tags->rqs)
 		goto err_free_tags;
 
+	pr_info("Vivo5R rq_map: before static array\n");
 	tags->static_rqs = kcalloc_node(nr_tags, sizeof(struct request *),
 					GFP_NOIO | __GFP_NOWARN | __GFP_NORETRY,
 					node);
+	pr_info("Vivo5R rq_map: static array returned %p\n", tags->static_rqs);
 	if (!tags->static_rqs)
 		goto err_free_rqs;
 
+	pr_info("Vivo5R rq_map: return\n");
 	return tags;
 
 err_free_rqs:
@@ -3627,6 +3636,8 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 	rq_size = round_up(sizeof(struct request) + set->cmd_size,
 				cache_line_size());
 	left = rq_size * depth;
+	pr_info("Vivo5R alloc_rqs: enter hctx=%u depth=%u rq_size=%zu left=%zu\n",
+		hctx_idx, depth, rq_size, left);
 
 	for (i = 0; i < depth; ) {
 		int this_order = max_order;
@@ -3637,6 +3648,8 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 		while (this_order && left < order_to_size(this_order - 1))
 			this_order--;
 
+		pr_info("Vivo5R alloc_rqs: before pages i=%u order=%d left=%zu\n",
+			i, this_order, left);
 		do {
 			page = alloc_pages_node(node,
 				GFP_NOIO | __GFP_NOWARN | __GFP_NORETRY | __GFP_ZERO,
@@ -3648,6 +3661,8 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 			if (order_to_size(this_order) < rq_size)
 				break;
 		} while (1);
+		pr_info("Vivo5R alloc_rqs: pages returned %p order=%d\n",
+			page, this_order);
 
 		if (!page)
 			goto fail;
@@ -4138,16 +4153,23 @@ struct blk_mq_tags *blk_mq_alloc_map_and_rqs(struct blk_mq_tag_set *set,
 	struct blk_mq_tags *tags;
 	int ret;
 
+	pr_info("Vivo5R map+rqs: enter hctx=%u depth=%u reserved=%u\n",
+		hctx_idx, depth, set->reserved_tags);
+	pr_info("Vivo5R map+rqs: before rq_map\n");
 	tags = blk_mq_alloc_rq_map(set, hctx_idx, depth, set->reserved_tags);
+	pr_info("Vivo5R map+rqs: rq_map returned %p\n", tags);
 	if (!tags)
 		return NULL;
 
+	pr_info("Vivo5R map+rqs: before alloc_rqs\n");
 	ret = blk_mq_alloc_rqs(set, tags, hctx_idx, depth);
+	pr_info("Vivo5R map+rqs: alloc_rqs returned %d\n", ret);
 	if (ret) {
 		blk_mq_free_rq_map(tags);
 		return NULL;
 	}
 
+	pr_info("Vivo5R map+rqs: return\n");
 	return tags;
 }
 

@@ -659,13 +659,17 @@ static int elevator_change(struct request_queue *q, struct elv_change_ctx *ctx)
 	lockdep_assert_held(&set->update_nr_hwq_lock);
 
 	if (strncmp(ctx->name, "none", 4)) {
+		pr_info("Vivo5R elv: before alloc sched res %s\n", ctx->name);
 		ret = blk_mq_alloc_sched_res(q, ctx->type, &ctx->res,
 				set->nr_hw_queues);
+		pr_info("Vivo5R elv: alloc sched res returned %d\n", ret);
 		if (ret)
 			return ret;
 	}
 
+	pr_info("Vivo5R elv: before freeze\n");
 	memflags = blk_mq_freeze_queue(q);
+	pr_info("Vivo5R elv: freeze complete\n");
 	/*
 	 * May be called before adding disk, when there isn't any FS I/O,
 	 * so freezing queue plus canceling dispatch work is enough to
@@ -675,14 +679,26 @@ static int elevator_change(struct request_queue *q, struct elv_change_ctx *ctx)
 	 *
 	 * Disk isn't added yet, so verifying queue lock only manually.
 	 */
+	pr_info("Vivo5R elv: before cancel work\n");
 	blk_mq_cancel_work_sync(q);
+	pr_info("Vivo5R elv: cancel work complete\n");
+	pr_info("Vivo5R elv: before elevator mutex\n");
 	mutex_lock(&q->elevator_lock);
-	if (!(q->elevator && elevator_match(q->elevator->type, ctx->name)))
+	pr_info("Vivo5R elv: elevator mutex acquired\n");
+	if (!(q->elevator && elevator_match(q->elevator->type, ctx->name))) {
+		pr_info("Vivo5R elv: before switch\n");
 		ret = elevator_switch(q, ctx);
+	}
+	pr_info("Vivo5R elv: switch complete ret=%d\n", ret);
 	mutex_unlock(&q->elevator_lock);
+	pr_info("Vivo5R elv: elevator mutex released\n");
 	blk_mq_unfreeze_queue(q, memflags);
+	pr_info("Vivo5R elv: unfreeze complete\n");
+	if (!ret)
+		pr_info("Vivo5R elv: before change done\n");
 	if (!ret)
 		ret = elevator_change_done(q, ctx);
+	pr_info("Vivo5R elv: change done ret=%d\n", ret);
 
 	/*
 	 * Free sched resource if it's allocated but we couldn't switch elevator.

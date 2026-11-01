@@ -3648,20 +3648,13 @@ int device_add(struct device *dev)
 	struct class_interface *class_intf;
 	int error = -EINVAL;
 	struct kobject *glue_dir = NULL;
-	bool vivo5r_diag = false;
 
 	dev = get_device(dev);
 	if (!dev)
 		goto done;
 
-	vivo5r_diag = dev_name(dev) && !strcmp(dev_name(dev), "mmcblk0");
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: enter\n");
-
 	if (!dev->p) {
 		error = device_private_init(dev);
-		if (vivo5r_diag)
-			pr_info("Vivo5R device_add: private_init error=%d\n", error);
 		if (error)
 			goto done;
 	}
@@ -3683,19 +3676,13 @@ int device_add(struct device *dev)
 		error = dev_set_name(dev, "%s%u", dev->bus->dev_name, dev->id);
 	else
 		error = -EINVAL;
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: name ready error=%d\n", error);
 	if (error)
 		goto name_error;
 
 	pr_debug("device: '%s': %s\n", dev_name(dev), __func__);
 
 	parent = get_device(dev->parent);
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: before parent\n");
 	kobj = get_device_parent(dev, parent);
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: parent returned %p\n", kobj);
 	if (IS_ERR(kobj)) {
 		error = PTR_ERR(kobj);
 		goto parent_error;
@@ -3709,11 +3696,7 @@ int device_add(struct device *dev)
 
 	/* first, register with generic layer. */
 	/* we require the name to be set before, and pass NULL */
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: before kobject_add\n");
 	error = kobject_add(&dev->kobj, dev->kobj.parent, NULL);
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: kobject_add returned %d\n", error);
 	if (error) {
 		glue_dir = kobj;
 		goto Error;
@@ -3721,33 +3704,21 @@ int device_add(struct device *dev)
 
 	/* notify platform of device entry */
 	device_platform_notify(dev);
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: platform notify complete\n");
 
 	error = device_create_file(dev, &dev_attr_uevent);
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: uevent file returned %d\n", error);
 	if (error)
 		goto attrError;
 
 	error = device_add_class_symlinks(dev);
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: class symlinks returned %d\n", error);
 	if (error)
 		goto SymlinkError;
 	error = device_add_attrs(dev);
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: attrs returned %d\n", error);
 	if (error)
 		goto AttrsError;
 	error = bus_add_device(dev);
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: bus add returned %d\n", error);
 	if (error)
 		goto BusError;
 	error = dpm_sysfs_add(dev);
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: dpm sysfs returned %d\n", error);
 	if (error)
 		goto DPMError;
 	device_pm_add(dev);
@@ -3767,12 +3738,8 @@ int device_add(struct device *dev)
 	/* Notify clients of device addition.  This call must come
 	 * after dpm_sysfs_add() and before kobject_uevent().
 	 */
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: before uevent\n");
 	bus_notify(dev, BUS_NOTIFY_ADD_DEVICE);
 	kobject_uevent(&dev->kobj, KOBJ_ADD);
-	if (vivo5r_diag)
-		pr_info("Vivo5R device_add: uevent complete\n");
 
 	/*
 	 * Check if any of the other devices (consumers) have been waiting for

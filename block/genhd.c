@@ -453,6 +453,8 @@ static int __add_disk(struct device *parent, struct gendisk *disk,
 	struct device *ddev = disk_to_dev(disk);
 	int ret;
 
+	pr_info("Vivo5R genhd: __add_disk enter %s\n", disk->disk_name);
+
 	if (WARN_ON_ONCE(bdev_nr_sectors(disk->part0) > BLK_DEV_MAX_SECTORS))
 		return -EINVAL;
 
@@ -467,6 +469,7 @@ static int __add_disk(struct device *parent, struct gendisk *disk,
 			return -EINVAL;
 		bdev_set_flag(disk->part0, BD_HAS_SUBMIT_BIO);
 	}
+	pr_info("Vivo5R genhd: queue checks complete %s\n", disk->disk_name);
 
 	/*
 	 * We do not support partitions with zoned block devices, so do not try
@@ -482,6 +485,7 @@ static int __add_disk(struct device *parent, struct gendisk *disk,
 	 * Otherwise just allocate the device numbers for both the whole device
 	 * and all partitions from the extended dev_t space.
 	 */
+	pr_info("Vivo5R genhd: before minor setup %s\n", disk->disk_name);
 	ret = -EINVAL;
 	if (disk->major) {
 		if (WARN_ON(!disk->minors))
@@ -506,8 +510,11 @@ static int __add_disk(struct device *parent, struct gendisk *disk,
 		disk->major = BLOCK_EXT_MAJOR;
 		disk->first_minor = ret;
 	}
+	pr_info("Vivo5R genhd: minor setup complete %s major=%u first=%u\n",
+		disk->disk_name, disk->major, disk->first_minor);
 
 	/* delay uevents, until we scanned partition table */
+	pr_info("Vivo5R genhd: before device metadata %s\n", disk->disk_name);
 	dev_set_uevent_suppress(ddev, 1);
 
 	ddev->parent = parent;
@@ -517,6 +524,8 @@ static int __add_disk(struct device *parent, struct gendisk *disk,
 		device_set_node(ddev, fwnode);
 	if (!(disk->flags & GENHD_FL_HIDDEN))
 		ddev->devt = MKDEV(disk->major, disk->first_minor);
+	pr_info("Vivo5R genhd: device metadata complete %s\n",
+		disk->disk_name);
 	pr_info("Vivo5R genhd: before device_add %s\n", disk->disk_name);
 	ret = device_add(ddev);
 	pr_info("Vivo5R genhd: device_add returned %d for %s\n",

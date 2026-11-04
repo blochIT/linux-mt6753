@@ -174,18 +174,6 @@
 		reg = <0 0x40000000 0 0xc0000000>;
 	};
 
-	reserved-memory {
-		#address-cells = <2>;
-		#size-cells = <2>;
-		ranges;
-
-		/* Keep the firmware RAM_CONSOLE header/status area untouched. */
-		vivo5r_checkpoint: checkpoint@43f0f000 {
-			reg = <0 0x43f0f000 0 0x1000>;
-			no-map;
-		};
-	};
-
 	sysirq: interrupt-controller@10200620 {
 		compatible = "mediatek,mt6577-sysirq";
 		interrupt-controller;

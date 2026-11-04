@@ -6107,6 +6107,11 @@ static struct workqueue_struct *__alloc_workqueue(const char *fmt,
 	struct workqueue_struct *wq;
 	size_t wq_size;
 	int name_len;
+	bool trace_vivo5r = !strcmp(fmt, "mmc_complete");
+
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: __alloc enter flags=0x%x max_active=%d\n",
+			flags, max_active);
 
 	if (flags & WQ_BH) {
 		if (WARN_ON_ONCE(flags & ~__WQ_BH_ALLOWS))
@@ -6126,10 +6131,14 @@ static struct workqueue_struct *__alloc_workqueue(const char *fmt,
 		wq_size = sizeof(*wq);
 
 	wq = kzalloc_noprof(wq_size, GFP_KERNEL);
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: wq allocation returned %p\n", wq);
 	if (!wq)
 		return NULL;
 
 	wq->attrs = alloc_workqueue_attrs_noprof();
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: attrs allocation returned %p\n", wq->attrs);
 	if (!wq->attrs)
 		goto err_free_wq;
 
@@ -6188,6 +6197,8 @@ static struct workqueue_struct *__alloc_workqueue(const char *fmt,
 
 	if (alloc_flush_pnodes(wq) < 0)
 		goto err_free_wq;
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: flush pnodes complete\n");
 
 	if (flags & WQ_UNBOUND) {
 		if (alloc_node_nr_active(wq->node_nr_active) < 0)
@@ -6199,9 +6210,15 @@ static struct workqueue_struct *__alloc_workqueue(const char *fmt,
 	 * and the global freeze state.
 	 */
 	mutex_lock(&wq_pool_mutex);
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: pool mutex acquired\n");
 
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: before alloc_and_link_pwqs\n");
 	if (alloc_and_link_pwqs(wq) < 0)
 		goto err_unlock_free_node_nr_active;
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: alloc_and_link_pwqs complete\n");
 
 	mutex_lock(&wq->mutex);
 	wq_adjust_max_active(wq);
@@ -6213,9 +6230,13 @@ static struct workqueue_struct *__alloc_workqueue(const char *fmt,
 		goto err_unlock_destroy;
 
 	mutex_unlock(&wq_pool_mutex);
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: pool mutex released\n");
 
 	if ((wq->flags & WQ_SYSFS) && workqueue_sysfs_register(wq))
 		goto err_destroy;
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: __alloc return %p\n", wq);
 
 	return wq;
 

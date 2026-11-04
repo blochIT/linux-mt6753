@@ -6220,14 +6220,26 @@ static struct workqueue_struct *__alloc_workqueue(const char *fmt,
 	if (trace_vivo5r)
 		pr_info("Vivo5R wq: alloc_and_link_pwqs complete\n");
 
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: before wq mutex adjustment\n");
 	mutex_lock(&wq->mutex);
 	wq_adjust_max_active(wq);
 	mutex_unlock(&wq->mutex);
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: wq mutex adjustment complete\n");
 
 	list_add_tail_rcu(&wq->list, &workqueues);
+	if (trace_vivo5r)
+		pr_info("Vivo5R wq: list registration complete\n");
 
-	if (wq_online && init_rescuer(wq) < 0)
-		goto err_unlock_destroy;
+	if (wq_online) {
+		if (trace_vivo5r)
+			pr_info("Vivo5R wq: before init_rescuer\n");
+		if (init_rescuer(wq) < 0)
+			goto err_unlock_destroy;
+		if (trace_vivo5r)
+			pr_info("Vivo5R wq: init_rescuer complete\n");
+	}
 
 	mutex_unlock(&wq_pool_mutex);
 	if (trace_vivo5r)

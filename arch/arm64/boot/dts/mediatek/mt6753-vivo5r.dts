@@ -179,8 +179,9 @@
 		#size-cells = <2>;
 		ranges;
 
-		vivo5r_checkpoint: checkpoint@43f10000 {
-			reg = <0 0x43f10000 0 0x1000>;
+		/* Keep the firmware RAM_CONSOLE header/status area untouched. */
+		vivo5r_checkpoint: checkpoint@43f0f000 {
+			reg = <0 0x43f0f000 0 0x1000>;
 			no-map;
 		};
 	};

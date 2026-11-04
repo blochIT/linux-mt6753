@@ -8,8 +8,10 @@
 #include <linux/spinlock.h>
 #include <linux/vivo5r_checkpoint.h>
 
-#define VIVO5R_CHECKPOINT_PHYS	0x43f10000ULL
-#define VIVO5R_CHECKPOINT_SIZE	0x1000
+#define VIVO5R_RAM_CONSOLE_TAIL_PHYS	0x43f0f000ULL
+#define VIVO5R_RAM_CONSOLE_TAIL_SIZE	0x1000
+#define VIVO5R_CHECKPOINT_OFFSET	0xc00
+#define VIVO5R_CHECKPOINT_SIZE	0x400
 #define VIVO5R_CHECKPOINT_MAGIC	0x56504350U /* VPCP */
 #define VIVO5R_CHECKPOINT_VERSION	1
 #define VIVO5R_CHECKPOINT_SLOT_SIZE	64
@@ -97,12 +99,13 @@ static int __init vivo5r_checkpoint_init(void)
 	struct vivo5r_checkpoint_record first, second;
 	const struct vivo5r_checkpoint_record *previous = NULL;
 
-	vivo5r_checkpoint_base = ioremap(VIVO5R_CHECKPOINT_PHYS,
-					 VIVO5R_CHECKPOINT_SIZE);
+	vivo5r_checkpoint_base = ioremap(VIVO5R_RAM_CONSOLE_TAIL_PHYS,
+					 VIVO5R_RAM_CONSOLE_TAIL_SIZE);
 	if (!vivo5r_checkpoint_base) {
 		pr_emerg("Vivo5R checkpoint: ioremap failed\n");
 		return -ENOMEM;
 	}
+	vivo5r_checkpoint_base += VIVO5R_CHECKPOINT_OFFSET;
 
 	if (vivo5r_checkpoint_read(0, &first))
 		previous = &first;

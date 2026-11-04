@@ -77,6 +77,7 @@ obj-y					+= vdso-wrap.o
 obj-$(CONFIG_COMPAT_VDSO)		+= vdso32-wrap.o
 
 obj-$(CONFIG_MT6753_VIVO5R_BUILTIN_DTB) += vivo5r-dtb.o
+obj-$(CONFIG_MT6753_VIVO5R_BUILTIN_DTB) += vivo5r-checkpoint.o
 AFLAGS_vivo5r-dtb.o += -DVIVO5R_DTB_PATH=\"$(objtree)/arch/arm64/boot/dts/mediatek/mt6753-vivo5r.dtb\"
 $(obj)/vivo5r-dtb.o: $(objtree)/arch/arm64/boot/dts/mediatek/mt6753-vivo5r.dtb
 

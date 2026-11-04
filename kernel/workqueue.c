@@ -33,6 +33,7 @@
 #include <linux/signal.h>
 #include <linux/completion.h>
 #include <linux/workqueue.h>
+#include <linux/vivo5r_checkpoint.h>
 #include <linux/slab.h>
 #include <linux/cpu.h>
 #include <linux/notifier.h>
@@ -6112,6 +6113,8 @@ static struct workqueue_struct *__alloc_workqueue(const char *fmt,
 	if (trace_vivo5r)
 		pr_info("Vivo5R wq: __alloc enter flags=0x%x max_active=%d\n",
 			flags, max_active);
+	if (trace_vivo5r)
+		vivo5r_checkpoint(VIVO5R_CP_WQ_ENTER, flags);
 
 	if (flags & WQ_BH) {
 		if (WARN_ON_ONCE(flags & ~__WQ_BH_ALLOWS))
@@ -6215,18 +6218,26 @@ static struct workqueue_struct *__alloc_workqueue(const char *fmt,
 
 	if (trace_vivo5r)
 		pr_info("Vivo5R wq: before alloc_and_link_pwqs\n");
+	if (trace_vivo5r)
+		vivo5r_checkpoint(VIVO5R_CP_WQ_LINK_BEFORE, 0);
 	if (alloc_and_link_pwqs(wq) < 0)
 		goto err_unlock_free_node_nr_active;
 	if (trace_vivo5r)
 		pr_info("Vivo5R wq: alloc_and_link_pwqs complete\n");
+	if (trace_vivo5r)
+		vivo5r_checkpoint(VIVO5R_CP_WQ_LINK_AFTER, 0);
 
 	if (trace_vivo5r)
 		pr_info("Vivo5R wq: before wq mutex adjustment\n");
+	if (trace_vivo5r)
+		vivo5r_checkpoint(VIVO5R_CP_WQ_ADJUST_BEFORE, 0);
 	mutex_lock(&wq->mutex);
 	wq_adjust_max_active(wq);
 	mutex_unlock(&wq->mutex);
 	if (trace_vivo5r)
 		pr_info("Vivo5R wq: wq mutex adjustment complete\n");
+	if (trace_vivo5r)
+		vivo5r_checkpoint(VIVO5R_CP_WQ_ADJUST_AFTER, 0);
 
 	list_add_tail_rcu(&wq->list, &workqueues);
 	if (trace_vivo5r)
@@ -6235,10 +6246,14 @@ static struct workqueue_struct *__alloc_workqueue(const char *fmt,
 	if (wq_online) {
 		if (trace_vivo5r)
 			pr_info("Vivo5R wq: before init_rescuer\n");
+		if (trace_vivo5r)
+			vivo5r_checkpoint(VIVO5R_CP_WQ_RESCUER_BEFORE, 0);
 		if (init_rescuer(wq) < 0)
 			goto err_unlock_destroy;
 		if (trace_vivo5r)
 			pr_info("Vivo5R wq: init_rescuer complete\n");
+		if (trace_vivo5r)
+			vivo5r_checkpoint(VIVO5R_CP_WQ_RESCUER_AFTER, 0);
 	}
 
 	mutex_unlock(&wq_pool_mutex);
@@ -6249,6 +6264,8 @@ static struct workqueue_struct *__alloc_workqueue(const char *fmt,
 		goto err_destroy;
 	if (trace_vivo5r)
 		pr_info("Vivo5R wq: __alloc return %p\n", wq);
+	if (trace_vivo5r)
+		vivo5r_checkpoint(VIVO5R_CP_WQ_RETURN, 1);
 
 	return wq;
 

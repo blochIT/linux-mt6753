@@ -30,6 +30,7 @@
 #include <linux/blk-crypto.h>
 #include <linux/part_stat.h>
 #include <linux/sched/isolation.h>
+#include <linux/vivo5r_checkpoint.h>
 
 #include <trace/events/block.h>
 
@@ -3638,6 +3639,8 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 	left = rq_size * depth;
 	pr_info("Vivo5R alloc_rqs: enter hctx=%u depth=%u rq_size=%zu left=%zu\n",
 		hctx_idx, depth, rq_size, left);
+	if (depth == 128)
+		vivo5r_checkpoint(VIVO5R_CP_RQS_ENTER, left);
 
 	for (i = 0; i < depth; ) {
 		int this_order = max_order;
@@ -3650,6 +3653,8 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 
 		pr_info("Vivo5R alloc_rqs: before pages i=%u order=%d left=%zu\n",
 			i, this_order, left);
+		if (depth == 128)
+			vivo5r_checkpoint(VIVO5R_CP_RQS_PAGES_BEFORE, i);
 		do {
 			page = alloc_pages_node(node,
 				GFP_NOIO | __GFP_NOWARN | __GFP_NORETRY | __GFP_ZERO,
@@ -3663,6 +3668,9 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 		} while (1);
 		pr_info("Vivo5R alloc_rqs: pages returned %p order=%d\n",
 			page, this_order);
+		if (depth == 128)
+			vivo5r_checkpoint(VIVO5R_CP_RQS_PAGES_AFTER,
+					   page ? this_order : 0xffffffff);
 
 		if (!page)
 			goto fail;
@@ -3672,6 +3680,8 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 		if (depth == 128)
 			pr_info("Vivo5R alloc_rqs: page linked i=%u order=%d\n",
 				i, this_order);
+		if (depth == 128)
+			vivo5r_checkpoint(VIVO5R_CP_RQS_PAGE_LINKED, i);
 
 		p = page_address(page);
 		/*
@@ -3687,6 +3697,8 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 				i, entries_per_page, to_do, left);
 		if (depth == 128)
 			pr_info("Vivo5R alloc_rqs: before init batch i=%u\n", i);
+		if (depth == 128)
+			vivo5r_checkpoint(VIVO5R_CP_RQS_BATCH_BEFORE, i);
 		for (j = 0; j < to_do; j++) {
 			struct request *rq = p;
 
@@ -3701,6 +3713,8 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 		}
 		if (depth == 128)
 			pr_info("Vivo5R alloc_rqs: after init batch i=%u\n", i);
+		if (depth == 128)
+			vivo5r_checkpoint(VIVO5R_CP_RQS_BATCH_AFTER, i);
 	}
 	return 0;
 

@@ -15,6 +15,7 @@
 #include <linux/pm_runtime.h>
 #include <linux/random.h>
 #include <linux/sysfs.h>
+#include <linux/vivo5r_checkpoint.h>
 
 #include <linux/mmc/host.h>
 #include <linux/mmc/card.h>
@@ -1625,6 +1626,7 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 	u32 rocr;
 
 	WARN_ON(!host->claimed);
+	vivo5r_checkpoint(VIVO5R_CP_MMC_INIT, 0);
 
 	pr_info("Vivo5R mmc_init_card: begin\n");
 
@@ -1743,8 +1745,10 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 
 	if (!oldcard) {
 		/* Read extended CSD. */
+		vivo5r_checkpoint(VIVO5R_CP_MMC_EXT_CSD_BEFORE, 0);
 		pr_info("Vivo5R mmc_init_card: before read_ext_csd\n");
 		err = mmc_read_ext_csd(card);
+		vivo5r_checkpoint(VIVO5R_CP_MMC_EXT_CSD_AFTER, err);
 		pr_info("Vivo5R mmc_init_card: read_ext_csd returned %d rev=%u\n",
 			err, card->ext_csd.rev);
 		if (err)
@@ -1761,6 +1765,8 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 
 		/* Erase size depends on CSD and Extended CSD */
 		mmc_set_erase_size(card);
+		vivo5r_checkpoint(VIVO5R_CP_MMC_EXT_CSD_SIZED,
+				  card->ext_csd.rev);
 		pr_info("Vivo5R mmc_init_card: ext_csd sizing complete\n");
 	}
 

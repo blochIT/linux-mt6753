@@ -21,6 +21,7 @@
 #include <linux/moduleparam.h>
 #include <linux/module.h>
 #include <linux/init.h>
+#include <linux/vivo5r_checkpoint.h>
 
 #include <linux/kernel.h>
 #include <linux/fs.h>
@@ -3230,6 +3231,7 @@ static int mmc_blk_probe(struct mmc_card *card)
 	int ret = 0;
 
 	pr_info("Vivo5R mmcblk: probe begin nr_parts=%u\n", card->nr_parts);
+	vivo5r_checkpoint(VIVO5R_CP_MMCBLK_PROBE, card->nr_parts);
 
 	/*
 	 * Check that the card supports the command class(es) we need.
@@ -3242,20 +3244,26 @@ static int mmc_blk_probe(struct mmc_card *card)
 	pr_info("Vivo5R mmcblk: after fixup\n");
 
 	pr_info("Vivo5R mmcblk: before completion workqueue\n");
+	vivo5r_checkpoint(VIVO5R_CP_MMCBLK_WQ_BEFORE, 0);
 	card->complete_wq = alloc_workqueue("mmc_complete",
 					WQ_MEM_RECLAIM | WQ_HIGHPRI | WQ_PERCPU,
 					0);
 	pr_info("Vivo5R mmcblk: completion workqueue returned %p\n",
 		card->complete_wq);
+	vivo5r_checkpoint(VIVO5R_CP_MMCBLK_WQ_AFTER,
+			  card->complete_wq ? 1 : 0);
 	if (!card->complete_wq) {
 		pr_err("Failed to create mmc completion workqueue");
 		return -ENOMEM;
 	}
 
 	pr_info("Vivo5R mmcblk: before main allocation\n");
+	vivo5r_checkpoint(VIVO5R_CP_MMCBLK_QUEUE_BEFORE, 0);
 	md = mmc_blk_alloc(card);
 	pr_info("Vivo5R mmcblk: main allocation returned %ld\n",
 		IS_ERR(md) ? PTR_ERR(md) : 0L);
+	vivo5r_checkpoint(VIVO5R_CP_MMCBLK_QUEUE_AFTER,
+			  IS_ERR(md) ? PTR_ERR(md) : 0);
 	if (IS_ERR(md)) {
 		ret = PTR_ERR(md);
 		goto out_free;

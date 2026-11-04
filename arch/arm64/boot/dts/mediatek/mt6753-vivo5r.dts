@@ -28,7 +28,7 @@
 
 	chosen {
 		stdout-path = "serial0:921600n8";
-		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 loglevel=8 irqchip.gicv2_force_probe=1 maxcpus=1 init=/init androidboot.hardware=mt6735 androidboot.selinux=permissive vivo5r_init_permissive=1";
+		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 loglevel=4 irqchip.gicv2_force_probe=1 maxcpus=1 init=/init androidboot.hardware=mt6735 androidboot.selinux=permissive vivo5r_init_permissive=1";
 		linux,initrd-start = <0x0 0x452a6a00>;
 		linux,initrd-end = <0x0 0x454e14db>;
 	};
@@ -172,6 +172,17 @@
 	memory@40000000 {
 		device_type = "memory";
 		reg = <0 0x40000000 0 0xc0000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		vivo5r_checkpoint: checkpoint@43f10000 {
+			reg = <0 0x43f10000 0 0x1000>;
+			no-map;
+		};
 	};
 
 	sysirq: interrupt-controller@10200620 {

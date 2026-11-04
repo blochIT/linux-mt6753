@@ -1626,6 +1626,8 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 
 	WARN_ON(!host->claimed);
 
+	pr_info("Vivo5R mmc_init_card: begin\n");
+
 	/* Set correct bus mode for MMC before attempting init */
 	if (!mmc_host_is_spi(host))
 		mmc_set_bus_mode(host, MMC_BUSMODE_OPENDRAIN);
@@ -1657,6 +1659,7 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 	 * Fetch CID from card.
 	 */
 	err = mmc_send_cid(host, cid);
+	pr_info("Vivo5R mmc_init_card: send_cid returned %d\n", err);
 	if (err)
 		goto err;
 
@@ -1706,14 +1709,18 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 		/*
 		 * Fetch CSD from card.
 		 */
+		pr_info("Vivo5R mmc_init_card: before send_csd\n");
 		err = mmc_send_csd(card, card->raw_csd);
+		pr_info("Vivo5R mmc_init_card: send_csd returned %d\n", err);
 		if (err)
 			goto free_card;
 
 		err = mmc_decode_csd(card);
+		pr_info("Vivo5R mmc_init_card: decode_csd returned %d\n", err);
 		if (err)
 			goto free_card;
 		err = mmc_decode_cid(card);
+		pr_info("Vivo5R mmc_init_card: decode_cid returned %d\n", err);
 		if (err)
 			goto free_card;
 	}
@@ -1736,7 +1743,10 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 
 	if (!oldcard) {
 		/* Read extended CSD. */
+		pr_info("Vivo5R mmc_init_card: before read_ext_csd\n");
 		err = mmc_read_ext_csd(card);
+		pr_info("Vivo5R mmc_init_card: read_ext_csd returned %d rev=%u\n",
+			err, card->ext_csd.rev);
 		if (err)
 			goto free_card;
 
@@ -1751,6 +1761,7 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 
 		/* Erase size depends on CSD and Extended CSD */
 		mmc_set_erase_size(card);
+		pr_info("Vivo5R mmc_init_card: ext_csd sizing complete\n");
 	}
 
 	/*

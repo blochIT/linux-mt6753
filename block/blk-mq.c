@@ -3669,6 +3669,9 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 
 		page->private = this_order;
 		list_add_tail(&page->lru, &tags->page_list);
+		if (depth == 128)
+			pr_info("Vivo5R alloc_rqs: page linked i=%u order=%d\n",
+				i, this_order);
 
 		p = page_address(page);
 		/*
@@ -3679,6 +3682,11 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 		entries_per_page = order_to_size(this_order) / rq_size;
 		to_do = min(entries_per_page, depth - i);
 		left -= to_do * rq_size;
+		if (depth == 128)
+			pr_info("Vivo5R alloc_rqs: batch i=%u entries=%u to_do=%d left=%zu\n",
+				i, entries_per_page, to_do, left);
+		if (depth == 128)
+			pr_info("Vivo5R alloc_rqs: before init batch i=%u\n", i);
 		for (j = 0; j < to_do; j++) {
 			struct request *rq = p;
 
@@ -3691,6 +3699,8 @@ static int blk_mq_alloc_rqs(struct blk_mq_tag_set *set,
 			p += rq_size;
 			i++;
 		}
+		if (depth == 128)
+			pr_info("Vivo5R alloc_rqs: after init batch i=%u\n", i);
 	}
 	return 0;
 

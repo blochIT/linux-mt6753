@@ -15,7 +15,12 @@
 void arch_sync_dma_for_device(phys_addr_t paddr, size_t size,
 			      enum dma_data_direction dir)
 {
-	unsigned long start = (unsigned long)phys_to_virt(paddr);
+	unsigned long start;
+
+	if (unlikely(paddr < 0x40000000ULL))
+		return;
+
+	start = (unsigned long)phys_to_virt(paddr);
 
 	dcache_clean_poc_nosync(start, start + size);
 }
@@ -23,10 +28,15 @@ void arch_sync_dma_for_device(phys_addr_t paddr, size_t size,
 void arch_sync_dma_for_cpu(phys_addr_t paddr, size_t size,
 			   enum dma_data_direction dir)
 {
-	unsigned long start = (unsigned long)phys_to_virt(paddr);
+	unsigned long start;
 
 	if (dir == DMA_TO_DEVICE)
 		return;
+
+	if (unlikely(paddr < 0x40000000ULL))
+		return;
+
+	start = (unsigned long)phys_to_virt(paddr);
 
 	dcache_inval_poc_nosync(start, start + size);
 }

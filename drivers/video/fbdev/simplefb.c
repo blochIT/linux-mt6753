@@ -13,6 +13,7 @@
  */
 
 #include <linux/aperture.h>
+#include <linux/backlight.h>
 #include <linux/clk.h>
 #include <linux/errno.h>
 #include <linux/fb.h>
@@ -116,11 +117,17 @@ static void simplefb_destroy(struct fb_info *info)
 		release_mem_region(mem->start, resource_size(mem));
 }
 
+static int simplefb_blank(int blank, struct fb_info *info)
+{
+	return 0;
+}
+
 static const struct fb_ops simplefb_ops = {
 	.owner		= THIS_MODULE,
 	FB_DEFAULT_IOMEM_OPS,
 	.fb_destroy	= simplefb_destroy,
 	.fb_setcolreg	= simplefb_setcolreg,
+	.fb_blank	= simplefb_blank,
 };
 
 static struct simplefb_format simplefb_formats[] = SIMPLEFB_FORMATS;
@@ -549,6 +556,20 @@ static int simplefb_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
+#if IS_ENABLED(CONFIG_ARCH_MEDIATEK)
+	if (of_machine_is_compatible("mediatek,mt6753") ||
+	    of_machine_is_compatible("blu,vivo5r")) {
+		void __iomem *ovl_base = ioremap(0x14007000, 0x100);
+		if (ovl_base) {
+			/* Disable Fastboot overlay (Layer 3), enable only Layer 0 */
+			writel(0x1, ovl_base + 0x02c);
+			/* Set Layer 0 format to native ARGB8888 */
+			writel(0x000031ff, ovl_base + 0x030);
+			iounmap(ovl_base);
+		}
+	}
+#endif
+
 	if (params.memory.start == 0 && params.memory.end == 0) {
 		res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 		if (!res) {
@@ -637,6 +658,17 @@ static int simplefb_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Unable to acquire aperture: %d\n", ret);
 		goto error_genpds;
 	}
+
+#if IS_ENABLED(CONFIG_FB_BACKLIGHT)
+	info->bl_dev = devm_of_find_backlight(&pdev->dev);
+	if (IS_ERR(info->bl_dev)) {
+		ret = PTR_ERR(info->bl_dev);
+		if (ret == -EPROBE_DEFER)
+			goto error_genpds;
+		info->bl_dev = NULL;
+	}
+#endif
+
 	ret = register_framebuffer(info);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "Unable to register simplefb: %d\n", ret);

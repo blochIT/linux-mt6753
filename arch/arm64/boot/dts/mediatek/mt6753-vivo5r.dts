@@ -13,6 +13,7 @@
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/clock/mediatek,mt6735-pericfg.h>
 #include <dt-bindings/clock/mediatek,mt6735-topckgen.h>
+#include <dt-bindings/phy/phy.h>
 
 / {
 	model = "Blu Vivo 5R";
@@ -28,9 +29,34 @@
 
 	chosen {
 		stdout-path = "serial0:921600n8";
-		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 loglevel=4 irqchip.gicv2_force_probe=1 maxcpus=1 init=/init androidboot.hardware=mt6735 androidboot.selinux=permissive vivo5r_init_permissive=1";
-		linux,initrd-start = <0x0 0x45281200>;
-		linux,initrd-end = <0x0 0x454bbcdb>;
+		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 console=tty0 consoleblank=30 loglevel=4 clk_ignore_unused selinux=0 user_debug=31 irqchip.gicv2_force_probe=1 maxcpus=4 clocksource=timer@10004000 bootopt=64S3,32N2,64N2 printk.disable_uart=0";
+		linux,initrd-start = <0x0 0x50000000>;
+		linux,initrd-end = <0x0 0x503a0363>;
+
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		framebuffer0: framebuffer@fe420000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0xfe420000 0x0 0x01be0000>;
+			width = <1080>;
+			height = <1920>;
+			stride = <4352>;
+			format = "a8b8g8r8";
+			backlight = <&backlight>;
+		};
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		framebuffer_reserved: framebuffer@fe420000 {
+			reg = <0x0 0xfe420000 0x0 0x01be0000>;
+			no-map;
+		};
 	};
 
 	vcc_emmc: regulator-emmc-vcc {
@@ -53,56 +79,56 @@
 		cpu0: cpu@0 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
-			enable-method = "psci";
+			enable-method = "mt-boot";
 			reg = <0x000>;
 		};
 
 		cpu1: cpu@1 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
-			enable-method = "psci";
+			enable-method = "mt-boot";
 			reg = <0x001>;
 		};
 
 		cpu2: cpu@2 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
-			enable-method = "psci";
+			enable-method = "mt-boot";
 			reg = <0x002>;
 		};
 
 		cpu3: cpu@3 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
-			enable-method = "psci";
+			enable-method = "mt-boot";
 			reg = <0x003>;
 		};
 
 		cpu4: cpu@100 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
-			enable-method = "psci";
+			enable-method = "mt-boot";
 			reg = <0x100>;
 		};
 
 		cpu5: cpu@101 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
-			enable-method = "psci";
+			enable-method = "mt-boot";
 			reg = <0x101>;
 		};
 
 		cpu6: cpu@102 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
-			enable-method = "psci";
+			enable-method = "mt-boot";
 			reg = <0x102>;
 		};
 
 		cpu7: cpu@103 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
-			enable-method = "psci";
+			enable-method = "mt-boot";
 			reg = <0x103>;
 		};
 	};
@@ -198,6 +224,23 @@
 		status = "okay";
 	};
 
+	disp_pwm: pwm@1100e000 {
+		compatible = "mediatek,mt8173-disp-pwm";
+		reg = <0 0x1100e000 0 0x1000>;
+		#pwm-cells = <2>;
+		clocks = <&clk26m>, <&clk26m>;
+		clock-names = "main", "mm";
+		status = "okay";
+	};
+
+	backlight: backlight {
+		compatible = "pwm-backlight";
+		pwms = <&disp_pwm 0 40000>;
+		brightness-levels = <0 4 8 16 32 64 128 192 255>;
+		default-brightness-level = <8>;
+		status = "okay";
+	};
+
 	mmc0: mmc@11230000 {
 		compatible = "mediatek,mt6753-mmc";
 		reg = <0 0x11230000 0 0x10000>;
@@ -212,6 +255,63 @@
 		max-frequency = <26000000>;
 		vmmc-supply = <&vcc_emmc>;
 		mediatek,no-pinctrl;
+		status = "okay";
+	};
+
+	mmc1: mmc@11240000 {
+		compatible = "mediatek,mt6753-mmc";
+		reg = <0 0x11240000 0 0x10000>;
+		interrupts = <GIC_SPI 80 IRQ_TYPE_LEVEL_LOW>;
+		clocks = <&pericfg CLK_PERI_MSDC30_1>,
+			 <&topckgen CLK_TOP_AXI_SEL>;
+		clock-names = "source", "hclk";
+		bus-width = <4>;
+		max-frequency = <50000000>;
+		cap-sd-highspeed;
+		no-sdio;
+		broken-cd;
+		vmmc-supply = <&vcc_emmc>;
+		mediatek,no-pinctrl;
+		status = "okay";
+	};
+
+	auxadc: adc@11001000 {
+		compatible = "mediatek,mt8173-auxadc";
+		reg = <0 0x11001000 0 0x1000>;
+		clocks = <&pericfg CLK_PERI_AUXADC>;
+		clock-names = "main";
+		#io-channel-cells = <1>;
+		status = "okay";
+	};
+
+	usb_phy: t-phy@11210000 {
+		compatible = "mediatek,generic-tphy-v1";
+		reg = <0 0x11210000 0 0x800>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+		status = "okay";
+
+		u2port0: usb-phy@11210800 {
+			reg = <0 0x11210800 0 0x100>;
+			clocks = <&topckgen CLK_TOP_UNIVPLL_D26>;
+			clock-names = "ref";
+			#phy-cells = <1>;
+			status = "okay";
+		};
+	};
+
+	usb0: usb@11200000 {
+		compatible = "mediatek,mt6753-musb", "mediatek,mtk-musb";
+		reg = <0 0x11200000 0 0x1000>;
+		interrupts = <GIC_SPI 72 IRQ_TYPE_LEVEL_LOW>;
+		interrupt-names = "mc";
+		phys = <&u2port0 PHY_TYPE_USB2>;
+		clocks = <&pericfg CLK_PERI_USB0>,
+			 <&topckgen CLK_TOP_USB20_SEL>,
+			 <&topckgen CLK_TOP_UNIVPLL_D26>;
+		clock-names = "main", "mcu", "univpll";
+		dr_mode = "peripheral";
 		status = "okay";
 	};
 };

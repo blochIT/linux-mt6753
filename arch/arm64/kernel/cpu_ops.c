@@ -19,12 +19,18 @@ extern const struct cpu_operations smp_spin_table_ops;
 extern const struct cpu_operations acpi_parking_protocol_ops;
 #endif
 extern const struct cpu_operations cpu_psci_ops;
+#if IS_ENABLED(CONFIG_MT6753_VIVO5R_BUILTIN_DTB)
+extern const struct cpu_operations mt6753_smp_ops;
+#endif
 
 static const struct cpu_operations *cpu_ops[NR_CPUS] __ro_after_init;
 
 static const struct cpu_operations *const dt_supported_cpu_ops[] __initconst = {
 	&smp_spin_table_ops,
 	&cpu_psci_ops,
+#if IS_ENABLED(CONFIG_MT6753_VIVO5R_BUILTIN_DTB)
+	&mt6753_smp_ops,
+#endif
 	NULL,
 };
 

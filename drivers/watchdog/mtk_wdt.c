@@ -314,13 +314,22 @@ static int mtk_wdt_restart(struct watchdog_device *wdt_dev,
 
 	wdt_base = mtk_wdt->wdt_base;
 
-	/* Enable reset in order to issue a system reset instead of an IRQ */
-	reg = readl(wdt_base + WDT_MODE);
-	reg &= ~WDT_MODE_IRQ_EN;
-	writel(reg | WDT_MODE_KEY, wdt_base + WDT_MODE);
+	/* 1. Reload watchdog counter */
+	writel(WDT_RST_RELOAD, wdt_base + WDT_RST);
+	dsb(sy);
 
+	/* 2. Enable reset and external reset, clear IRQ/dual mode */
+	reg = readl(wdt_base + WDT_MODE);
+	reg &= ~(WDT_MODE_IRQ_EN | WDT_MODE_DUAL_EN);
+	reg |= (WDT_MODE_EN | WDT_MODE_EXRST_EN);
+	writel(reg | WDT_MODE_KEY, wdt_base + WDT_MODE);
+	dsb(sy);
+	udelay(100);
+
+	/* 3. Issue software reset to TOPRGU */
 	while (1) {
 		writel(WDT_SWRST_KEY, wdt_base + WDT_SWRST);
+		dsb(sy);
 		mdelay(5);
 	}
 
@@ -627,7 +636,7 @@ static int mtk_wdt_probe(struct platform_device *pdev)
 
 	watchdog_init_timeout(&mtk_wdt->wdt_dev, timeout, dev);
 	watchdog_set_nowayout(&mtk_wdt->wdt_dev, nowayout);
-	watchdog_set_restart_priority(&mtk_wdt->wdt_dev, 128);
+	watchdog_set_restart_priority(&mtk_wdt->wdt_dev, 255);
 
 	watchdog_set_drvdata(&mtk_wdt->wdt_dev, mtk_wdt);
 

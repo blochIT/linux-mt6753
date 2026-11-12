@@ -1476,9 +1476,9 @@ static inline bool msdc_cmd_is_ready(struct msdc_host *host,
 	u32 val;
 	int ret;
 
-	/* The max busy time we can endure is 20ms */
+	/* The max busy time we can endure is 100ms for CMD, 1s for SDCBUSY */
 	ret = readl_poll_timeout_atomic(host->base + SDC_STS, val,
-					!(val & SDC_STS_CMDBUSY), 1, 20000);
+					!(val & SDC_STS_CMDBUSY), 1, 100000);
 	if (ret) {
 		dev_err(host->dev, "CMD bus busy detected\n");
 		host->error |= REQ_CMD_BUSY;
@@ -1487,9 +1487,9 @@ static inline bool msdc_cmd_is_ready(struct msdc_host *host,
 	}
 
 	if (mmc_resp_type(cmd) == MMC_RSP_R1B || cmd->data) {
-		/* R1B or with data, should check SDCBUSY */
+		/* R1B or with data, should check SDCBUSY - give eMMC time to program flash */
 		ret = readl_poll_timeout_atomic(host->base + SDC_STS, val,
-						!(val & SDC_STS_SDCBUSY), 1, 20000);
+						!(val & SDC_STS_SDCBUSY), 10, 1000000);
 		if (ret) {
 			dev_err(host->dev, "Controller busy detected\n");
 			host->error |= REQ_CMD_BUSY;

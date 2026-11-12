@@ -361,8 +361,8 @@
 #define MSDC_MMAP_FLAG BIT(2)
 
 #define MTK_MMC_AUTOSUSPEND_DELAY	50
-#define CMD_TIMEOUT         (HZ/10 * 10)	/* 100ms x10 = 1s */
-#define DAT_TIMEOUT         (HZ    * 30)	/* 30s for large multi-block flash writes */
+#define CMD_TIMEOUT         (HZ/10 * 5)	/* 100ms x5 = 500ms */
+#define DAT_TIMEOUT         (HZ    * 5)	/* 5s */
 
 #define DEFAULT_DEBOUNCE	(8)	/* 8 cycles CD debounce */
 
@@ -1487,9 +1487,9 @@ static inline bool msdc_cmd_is_ready(struct msdc_host *host,
 	}
 
 	if (mmc_resp_type(cmd) == MMC_RSP_R1B || cmd->data) {
-		/* R1B or with data, should check SDCBUSY */
+		/* R1B or with data, should check SDCBUSY - give eMMC 1s to program flash */
 		ret = readl_poll_timeout_atomic(host->base + SDC_STS, val,
-						!(val & SDC_STS_SDCBUSY), 1, 20000);
+						!(val & SDC_STS_SDCBUSY), 10, 1000000);
 		if (ret) {
 			dev_err(host->dev, "Controller busy detected\n");
 			host->error |= REQ_CMD_BUSY;

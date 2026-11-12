@@ -362,7 +362,7 @@
 
 #define MTK_MMC_AUTOSUSPEND_DELAY	50
 #define CMD_TIMEOUT         (HZ/10 * 5)	/* 100ms x5 */
-#define DAT_TIMEOUT         (HZ    * 5)	/* 1000ms x5 */
+#define DAT_TIMEOUT         (HZ    * 15)	/* 1000ms x15 */
 
 #define DEFAULT_DEBOUNCE	(8)	/* 8 cycles CD debounce */
 
@@ -888,6 +888,8 @@ static inline void msdc_dma_setup(struct msdc_host *host, struct msdc_dma *dma,
 		sdr_set_field(host->base + DMA_SA_H4BIT, DMA_ADDR_HIGH_4BIT,
 			      upper_32_bits(dma->gpd_addr) & 0xf);
 	writel(lower_32_bits(dma->gpd_addr), host->base + MSDC_DMA_SA);
+	wmb();
+	dsb(sy);
 }
 
 static void msdc_prepare_data(struct msdc_host *host, struct mmc_data *data)
@@ -1272,8 +1274,11 @@ static void msdc_start_data(struct msdc_host *host, struct mmc_command *cmd,
 
 	mod_delayed_work(system_percpu_wq, &host->req_timeout, DAT_TIMEOUT);
 	msdc_dma_setup(host, &host->dma, data);
+	wmb();
+	dsb(sy);
 	sdr_set_bits(host->base + MSDC_INTEN, data_ints_mask);
 	sdr_set_field(host->base + MSDC_DMA_CTRL, MSDC_DMA_CTRL_START, 1);
+	dsb(sy);
 	dev_dbg(host->dev, "DMA start\n");
 	dev_dbg(host->dev, "%s: cmd=%d DMA data: %d blocks; read=%d\n",
 			__func__, cmd->opcode, data->blocks, read);

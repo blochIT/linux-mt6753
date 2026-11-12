@@ -1487,9 +1487,9 @@ static inline bool msdc_cmd_is_ready(struct msdc_host *host,
 	}
 
 	if (mmc_resp_type(cmd) == MMC_RSP_R1B || cmd->data) {
-		/* R1B or with data, should check SDCBUSY - give eMMC 1s to program flash */
+		/* R1B or with data, should check SDCBUSY */
 		ret = readl_poll_timeout_atomic(host->base + SDC_STS, val,
-						!(val & SDC_STS_SDCBUSY), 10, 1000000);
+						!(val & SDC_STS_SDCBUSY), 1, 20000);
 		if (ret) {
 			dev_err(host->dev, "Controller busy detected\n");
 			host->error |= REQ_CMD_BUSY;

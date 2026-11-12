@@ -1476,9 +1476,9 @@ static inline bool msdc_cmd_is_ready(struct msdc_host *host,
 	u32 val;
 	int ret;
 
-	/* The max busy time we can endure is 100ms for CMD, 1s for SDCBUSY */
+	/* The max busy time we can endure is 20ms */
 	ret = readl_poll_timeout_atomic(host->base + SDC_STS, val,
-					!(val & SDC_STS_CMDBUSY), 1, 100000);
+					!(val & SDC_STS_CMDBUSY), 1, 20000);
 	if (ret) {
 		dev_err(host->dev, "CMD bus busy detected\n");
 		host->error |= REQ_CMD_BUSY;
@@ -1487,9 +1487,9 @@ static inline bool msdc_cmd_is_ready(struct msdc_host *host,
 	}
 
 	if (mmc_resp_type(cmd) == MMC_RSP_R1B || cmd->data) {
-		/* R1B or with data, should check SDCBUSY - give eMMC time to program flash */
+		/* R1B or with data, should check SDCBUSY */
 		ret = readl_poll_timeout_atomic(host->base + SDC_STS, val,
-						!(val & SDC_STS_SDCBUSY), 10, 1000000);
+						!(val & SDC_STS_SDCBUSY), 1, 20000);
 		if (ret) {
 			dev_err(host->dev, "Controller busy detected\n");
 			host->error |= REQ_CMD_BUSY;
@@ -3171,8 +3171,7 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	if (mmc->caps & MMC_CAP_SDIO_IRQ)
 		mmc->caps2 |= MMC_CAP2_SDIO_IRQ_NOTHREAD;
 
-	if (host->dev_comp != &mt6735_compat)
-		mmc->caps |= MMC_CAP_CMD23;
+	mmc->caps |= MMC_CAP_CMD23;
 	if (host->cqhci)
 		mmc->caps2 |= MMC_CAP2_CQE | MMC_CAP2_CQE_DCMD;
 	/* MMC core transfer sizes tunable parameters */

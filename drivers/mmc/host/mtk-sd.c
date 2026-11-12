@@ -361,8 +361,8 @@
 #define MSDC_MMAP_FLAG BIT(2)
 
 #define MTK_MMC_AUTOSUSPEND_DELAY	50
-#define CMD_TIMEOUT         (HZ/10 * 5)	/* 100ms x5 */
-#define DAT_TIMEOUT         (HZ    * 5)	/* 1000ms x5 */
+#define CMD_TIMEOUT         (HZ/10 * 10)	/* 100ms x10 = 1s */
+#define DAT_TIMEOUT         (HZ    * 30)	/* 30s for large multi-block flash writes */
 
 #define DEFAULT_DEBOUNCE	(8)	/* 8 cycles CD debounce */
 

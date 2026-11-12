@@ -31,7 +31,7 @@
 		stdout-path = "serial0:921600n8";
 		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 loglevel=4 clk_ignore_unused selinux=0 user_debug=31 irqchip.gicv2_force_probe=1 maxcpus=4 clocksource=timer@10004000 bootopt=64S3,32N2,64N2 printk.disable_uart=0";
 		linux,initrd-start = <0x0 0x50000000>;
-		linux,initrd-end = <0x0 0x50500000>;
+		linux,initrd-end = <0x0 0x504ffd3b>;
 
 		#address-cells = <2>;
 		#size-cells = <2>;

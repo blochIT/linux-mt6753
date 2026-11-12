@@ -31,7 +31,7 @@
 		stdout-path = "serial0:921600n8";
 		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 console=tty0 consoleblank=0 loglevel=4 clk_ignore_unused selinux=0 user_debug=31 irqchip.gicv2_force_probe=1 maxcpus=4 clocksource=timer@10004000 bootopt=64S3,32N2,64N2 printk.disable_uart=0";
 		linux,initrd-start = <0x0 0x50000000>;
-		linux,initrd-end = <0x0 0x5052da04>;
+		linux,initrd-end = <0x0 0x5052d998>;
 
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -326,6 +326,9 @@
 		compatible = "mediatek,mt6753-btif", "mediatek,mt6735-btif", "mediatek,btif";
 		reg = <0 0x1100c000 0 0x1000>;
 		interrupts = <GIC_SPI 90 IRQ_TYPE_LEVEL_LOW>;
+		clocks = <&pericfg CLK_PERI_BTIF>,
+			 <&pericfg CLK_PERI_APDMA>;
+		clock-names = "btifc", "apdmac";
 		status = "okay";
 	};
 

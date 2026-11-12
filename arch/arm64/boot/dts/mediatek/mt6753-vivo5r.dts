@@ -31,7 +31,7 @@
 		stdout-path = "serial0:921600n8";
 		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 console=tty0 consoleblank=30 loglevel=4 clk_ignore_unused selinux=0 user_debug=31 irqchip.gicv2_force_probe=1 maxcpus=4 clocksource=timer@10004000 bootopt=64S3,32N2,64N2 printk.disable_uart=0";
 		linux,initrd-start = <0x0 0x50000000>;
-		linux,initrd-end = <0x0 0x503a0363>;
+		linux,initrd-end = <0x0 0x5052d932>;
 
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -56,6 +56,13 @@
 		framebuffer_reserved: framebuffer@fe420000 {
 			reg = <0x0 0xfe420000 0x0 0x01be0000>;
 			no-map;
+		};
+
+		consys_reserved: consys-reserve-memory {
+			compatible = "mediatek,consys-reserve-memory";
+			no-map;
+			size = <0x0 0x200000>;
+			alignment = <0x0 0x200000>;
 		};
 	};
 
@@ -312,6 +319,31 @@
 			 <&topckgen CLK_TOP_UNIVPLL_D26>;
 		clock-names = "main", "mcu", "univpll";
 		dr_mode = "peripheral";
+		status = "okay";
+	};
+
+	btif: btif@1100c000 {
+		compatible = "mediatek,mt6753-btif", "mediatek,mt6735-btif", "mediatek,btif";
+		reg = <0 0x1100c000 0 0x1000>;
+		interrupts = <GIC_SPI 90 IRQ_TYPE_LEVEL_LOW>;
+		status = "okay";
+	};
+
+	consys: consys@18070000 {
+		compatible = "mediatek,mt6753-consys", "mediatek,mt6735-consys";
+		reg = <0 0x18070000 0 0x200>,
+		      <0 0x10212000 0 0x100>,
+		      <0 0x10000000 0 0x2000>,
+		      <0 0x10006000 0 0x1000>;
+		interrupts = <GIC_SPI 229 IRQ_TYPE_LEVEL_LOW>,
+		             <GIC_SPI 227 IRQ_TYPE_LEVEL_LOW>;
+		status = "okay";
+	};
+
+	wifi: wifi@180f0000 {
+		compatible = "mediatek,wifi";
+		reg = <0 0x180f0000 0 0x5c>;
+		interrupts = <GIC_SPI 228 IRQ_TYPE_LEVEL_LOW>;
 		status = "okay";
 	};
 };

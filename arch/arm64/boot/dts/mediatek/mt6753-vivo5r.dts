@@ -259,6 +259,7 @@
 		no-sdio;
 		no-sd;
 		max-frequency = <26000000>;
+		cap-mmc-highspeed;
 		vmmc-supply = <&vcc_emmc>;
 		mediatek,no-pinctrl;
 		status = "okay";

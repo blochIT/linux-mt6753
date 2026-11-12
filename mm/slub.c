@@ -7408,7 +7408,7 @@ __refill_objects_node(struct kmem_cache *s, void **p, gfp_t gfp, unsigned int mi
 
 		object = get_freelist_nofreeze(s, slab, &count);
 
-		while (count && refilled < max) {
+		while (object && count && refilled < max) {
 			p[refilled] = object;
 			object = get_freepointer(s, object);
 			maybe_wipe_obj_freeptr(s, p[refilled]);
@@ -7423,7 +7423,7 @@ __refill_objects_node(struct kmem_cache *s, void **p, gfp_t gfp, unsigned int mi
 		 * slab is still full since we just detached its freelist.
 		 * Otherwise we must find the tail object.
 		 */
-		if (unlikely(count)) {
+		if (unlikely(count && object)) {
 			void *head = object;
 			void *tail;
 

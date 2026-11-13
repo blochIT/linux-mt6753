@@ -2647,6 +2647,8 @@ static void rcu_do_batch(struct rcu_data *rdp)
 		f = rhp->func;
 		debug_rcu_head_callback(rhp);
 		WRITE_ONCE(rhp->func, (rcu_callback_t)0L);
+		if (unlikely(!f))
+			continue;
 		f(rhp);
 
 		rcu_lock_release(&rcu_callback_map);

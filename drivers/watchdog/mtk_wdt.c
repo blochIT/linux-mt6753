@@ -314,6 +314,22 @@ static int mtk_wdt_restart(struct watchdog_device *wdt_dev,
 
 	wdt_base = mtk_wdt->wdt_base;
 
+	/* If userspace requested reboot to bootloader/fastboot/recovery, set non-reset flag */
+	if (data) {
+		const char *cmd = (const char *)data;
+		if (!strcmp(cmd, "bootloader") || !strcmp(cmd, "fastboot")) {
+			reg = readl(wdt_base + 0x24);
+			reg |= (1 << 2);
+			writel(reg, wdt_base + 0x24);
+			dsb(sy);
+		} else if (!strcmp(cmd, "recovery")) {
+			reg = readl(wdt_base + 0x24);
+			reg |= (1 << 1);
+			writel(reg, wdt_base + 0x24);
+			dsb(sy);
+		}
+	}
+
 	/* 1. Reload watchdog counter */
 	writel(WDT_RST_RELOAD, wdt_base + WDT_RST);
 	dsb(sy);

@@ -248,7 +248,7 @@ static void arm64_show_signal(int signo, const char *str)
 	    !__ratelimit(&rs))
 		return;
 
-	pr_info("%s[%d]: unhandled exception: ", tsk->comm, task_pid_nr(tsk));
+	pr_err("%s[%d]: unhandled exception: ", tsk->comm, task_pid_nr(tsk));
 	if (esr)
 		pr_cont("%s, ESR 0x%016lx, ", esr_get_class_string(esr), esr);
 

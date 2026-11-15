@@ -147,7 +147,7 @@ pstate_check_t * const aarch32_opcode_cond_checks[16] = {
 	__check_gt, __check_le, __check_al, __check_al
 };
 
-int show_unhandled_signals = 0;
+int show_unhandled_signals = 1;
 
 void dump_kernel_instr(unsigned long kaddr)
 {

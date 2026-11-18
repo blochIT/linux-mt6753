@@ -31,7 +31,7 @@
 		stdout-path = "serial0:921600n8";
 		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 console=tty0 consoleblank=30 loglevel=4 clk_ignore_unused selinux=0 user_debug=31 irqchip.gicv2_force_probe=1 maxcpus=4 clocksource=timer@10004000 bootopt=64S3,32N2,64N2 printk.disable_uart=0";
 		linux,initrd-start = <0x0 0x50000000>;
-		linux,initrd-end = <0x0 0x503a0259>;
+		linux,initrd-end = <0x0 0x503a0254>;
 
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -311,7 +311,7 @@
 			 <&topckgen CLK_TOP_USB20_SEL>,
 			 <&topckgen CLK_TOP_UNIVPLL_D26>;
 		clock-names = "main", "mcu", "univpll";
-		dr_mode = "peripheral";
+		dr_mode = "otg";
 		status = "okay";
 	};
 };

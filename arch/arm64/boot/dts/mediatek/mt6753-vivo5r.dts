@@ -32,7 +32,7 @@
 		stdout-path = "serial0:921600n8";
 		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 consoleblank=0 loglevel=4 slub_debug=- clk_ignore_unused selinux=0 user_debug=31 irqchip.gicv2_force_probe=1 maxcpus=4 clocksource=timer@10004000 bootopt=64S3,32N2,64N2 printk.disable_uart=0";
 		linux,initrd-start = <0x0 0x50000000>;
-		linux,initrd-end = <0x0 0x50312468>;
+		linux,initrd-end = <0x0 0x50312462>;
 
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -389,12 +389,15 @@
 		      <0 0x10006000 0 0x1000>;
 		interrupts = <GIC_SPI 229 IRQ_TYPE_LEVEL_LOW>,
 		             <GIC_SPI 227 IRQ_TYPE_LEVEL_LOW>;
-		pinctrl-names = "default", "gps_lna_state_init",
-				"gps_lna_state_oh", "gps_lna_state_ol";
+		/* The WMT module looks up this legacy state name directly. */
+		pinctrl-names = "default", "consys_pins_default",
+				"gps_lna_state_init", "gps_lna_state_oh",
+				"gps_lna_state_ol";
 		pinctrl-0 = <&consys_pins_default>;
-		pinctrl-1 = <&gpslna_pins_init>;
-		pinctrl-2 = <&gpslna_pins_oh>;
-		pinctrl-3 = <&gpslna_pins_ol>;
+		pinctrl-1 = <&consys_pins_default>;
+		pinctrl-2 = <&gpslna_pins_init>;
+		pinctrl-3 = <&gpslna_pins_oh>;
+		pinctrl-4 = <&gpslna_pins_ol>;
 		status = "okay";
 	};
 

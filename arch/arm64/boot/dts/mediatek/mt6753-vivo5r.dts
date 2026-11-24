@@ -14,6 +14,7 @@
 #include <dt-bindings/clock/mediatek,mt6735-pericfg.h>
 #include <dt-bindings/clock/mediatek,mt6735-topckgen.h>
 #include <dt-bindings/phy/phy.h>
+#include <dt-bindings/pinctrl/mediatek,mt6735-pinfunc.h>
 
 / {
 	model = "Blu Vivo 5R";
@@ -31,7 +32,7 @@
 		stdout-path = "serial0:921600n8";
 		bootargs = "earlycon=mtk8250,mmio32,0x11005000 console=ttyS0,921600n8 consoleblank=0 loglevel=4 slub_debug=- clk_ignore_unused selinux=0 user_debug=31 irqchip.gicv2_force_probe=1 maxcpus=4 clocksource=timer@10004000 bootopt=64S3,32N2,64N2 printk.disable_uart=0";
 		linux,initrd-start = <0x0 0x50000000>;
-		linux,initrd-end = <0x0 0x50312442>;
+		linux,initrd-end = <0x0 0x50312468>;
 
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -201,6 +202,57 @@
 		mediatek,vivo5r-vendor-wdt-mode;
 	};
 
+	pio: pin-controller@10211000 {
+		compatible = "mediatek,mt6735-pinctrl";
+		reg = <0 0x10211000 0 0x800>,
+		      <0 0x10211800 0 0x100>,
+		      <0 0x10211900 0 0x100>,
+		      <0 0x10211a00 0 0x100>,
+		      <0 0x10211b00 0 0x100>,
+		      <0 0x10211c00 0 0x100>,
+		      <0 0x10211d00 0 0x100>,
+		      <0 0x10005000 0 0x1000>;
+		reg-names = "gpio", "iocfg0", "iocfg1", "iocfg2", "iocfg3",
+			    "iocfg4", "iocfg5", "eint";
+		interrupts = <GIC_SPI 153 IRQ_TYPE_LEVEL_HIGH>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		gpio-ranges = <&pio 0 0 203>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+
+		consys_pins_default: consys-default-pins {
+			pins {
+				pinmux = <PINMUX_GPIO79__FUNC_GPIO79>;
+			};
+		};
+
+		gpslna_pins_init: gpslna-pins-init {
+			pins {
+				pinmux = <PINMUX_GPIO79__FUNC_GPIO79>;
+				slew-rate = <0>;
+				bias-disable;
+				output-low;
+			};
+		};
+
+		gpslna_pins_oh: gpslna-pins-on {
+			pins {
+				pinmux = <PINMUX_GPIO79__FUNC_GPIO79>;
+				slew-rate = <1>;
+				output-high;
+			};
+		};
+
+		gpslna_pins_ol: gpslna-pins-off {
+			pins {
+				pinmux = <PINMUX_GPIO79__FUNC_GPIO79>;
+				slew-rate = <1>;
+				output-low;
+			};
+		};
+	};
+
 	memory@40000000 {
 		device_type = "memory";
 		reg = <0 0x40000000 0 0xc0000000>;
@@ -337,6 +389,12 @@
 		      <0 0x10006000 0 0x1000>;
 		interrupts = <GIC_SPI 229 IRQ_TYPE_LEVEL_LOW>,
 		             <GIC_SPI 227 IRQ_TYPE_LEVEL_LOW>;
+		pinctrl-names = "default", "gps_lna_state_init",
+				"gps_lna_state_oh", "gps_lna_state_ol";
+		pinctrl-0 = <&consys_pins_default>;
+		pinctrl-1 = <&gpslna_pins_init>;
+		pinctrl-2 = <&gpslna_pins_oh>;
+		pinctrl-3 = <&gpslna_pins_ol>;
 		status = "okay";
 	};
 
